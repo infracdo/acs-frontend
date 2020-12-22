@@ -138,7 +138,18 @@ export const constantRoutes = [
       },
     ],
   },
-
+  {
+    path: '/',
+    component: Layout,
+    children: [
+      {
+        path: '/sample',
+        component: () => import('@/views/components/sample.vue'),
+        name: 'sample',
+        meta: { title: 'sample', icon: 'mdi-account-group' },
+      },
+    ],
+  },
   ...authRouter,
 ];
 

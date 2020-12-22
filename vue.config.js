@@ -6,9 +6,12 @@ function resolve(dir) {
 }
 
 module.exports = {
-  publicPath: process.env.NODE_ENV === 'production'
-    ? '/vue-vuetify-admin/'
-    : '/',
+  devServer: {
+    disableHostCheck: true,
+  },
+
+  lintOnSave: true,
+
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
     // it can be accessed in index.html to inject the correct title.
@@ -19,4 +22,6 @@ module.exports = {
       },
     },
   },
+
+  runtimeCompiler: true
 };

@@ -13,6 +13,7 @@ module.exports = {
     'vuetify',
   ],
   rules: {
+    "linebreak-style": 0,
     'no-console': 'off', // 'warn',
     'no-debugger': 'warn',
     'vue/array-bracket-spacing': 'warn',

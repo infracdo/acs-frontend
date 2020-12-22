@@ -1,6 +1,6 @@
 <template>
   <v-main class="layout-fab">
-    <v-btn
+    <!-- <v-btn
       v-if="settingsPanelBtn"
       small
       fab
@@ -13,7 +13,7 @@
       @click="toggleSettingsPanel"
     >
       <v-icon>mdi-settings</v-icon>
-    </v-btn>
+    </v-btn> -->
     <v-navigation-drawer
       right
       disable-resize-watcher

@@ -6,7 +6,7 @@
   "description": "Admin template based on Vue and Vuetify",
   "author": "NelsonEAX <nelsoneax@gmail.com>",
   "scripts": {
-    "serve": "vue-cli-service serve --https",
+    "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "test:e2e": "vue-cli-service test:e2e",
@@ -57,6 +57,7 @@
     "babel-eslint": "^10.1.0",
     "chai": "^4.2.0",
     "core-js": "^3.8.0",
+    "cross-env": "^7.0.3",
     "css-loader": "^3.6.0",
     "eslint": "^6.8.0",
     "eslint-plugin-vue": "^6.2.2",

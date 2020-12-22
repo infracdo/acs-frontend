@@ -11,126 +11,215 @@
           <span class="headline">Add SSID</span>
         </v-card-title>
         <v-card-text>
-          <v-container>
-            <v-row>
+            <v-row no-gutters>
               <v-col
-                cols="12"
-                sm="6"
+                cols="1"
+                md="1"
+              >
+              <v-subheader>SSID</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
                 md="4"
               >
                 <v-text-field
-                  label="SSID"
                   required
-                  solo
+                  outlined
+                  dense
                 ></v-text-field>
               </v-col>
+              <v-spacer />
               <v-col
-                cols="12"
-                sm="6"
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Forward mode</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
                 md="4"
               >
                 <v-text-field
-                  label="Vlan ID"
                   required
-                  solo
+                  outlined
+                  dense
                 ></v-text-field>
               </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-spacer />
               <v-col
-                cols="12"
-                sm="6"
+                cols="1"
+                md="1"
+              >
+              <v-subheader>VLAN ID</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
                 md="4"
               >
-                <v-select
-                  :items="['Bridge', 'NAT']"
-                  label="Forward mode"
-                ></v-select>
+                <v-text-field
+                  required
+                  outlined
+                  dense
+                ></v-text-field>
               </v-col>
-              <v-col cols="12" md="4">
-                <v-switch
-                  v-model="closeOnClick"
-                  label="Rate limit by ssid"
-                ></v-switch>
+            </v-row>
+            <v-row no-gutters>
+              <v-col
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Encryption Mode</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
+                md="4"
+              >
                 <v-select
                   :items="['Open', 'WPA-PSK', 'WPA-PSK2', 'WPA-Enterprise(802.1x']"
-                  label="Encryption Mode"
+                  outlined
+                  dense
                 ></v-select>
               </v-col>
+            </v-row>
+            <v-row no-gutters>
               <v-col
-                cols="12"
-                sm="6"
-                md="4"
+                cols="1"
+                md="1"
               >
-                <v-text-field
-                  label="Up-link KB/s"
-                  required
-                  solo
-                ></v-text-field>
+              <v-subheader>Limit by SSID</v-subheader>
               </v-col>
               <v-col
-                cols="12"
-                sm="6"
-                md="4"
-              >
-                <v-text-field
-                  label="Down-link KB/s"
-                  required
-                  solo
-                ></v-text-field>
-              </v-col>
-              <v-col
-                cols="12"
-                sm="6"
+                cols="4"
                 md="4"
               >
                 <v-switch
                   v-model="closeOnClick"
-                  label="Auth"
                 ></v-switch>
               </v-col>
+            </v-row>
+            <v-row no-gutters>
               <v-col
-                cols="12"
-                sm="6"
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Uplink</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
                 md="4"
               >
                 <v-text-field
-                  label="Portal Server URL"
                   required
-                  solo
+                  outlined
+                  dense
                 ></v-text-field>
               </v-col>
+              <v-spacer />
               <v-col
-                cols="12"
-                sm="6"
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Downlink</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
                 md="4"
               >
                 <v-text-field
-                  label="Portal IP"
                   required
-                  solo
+                  outlined
+                  dense
                 ></v-text-field>
               </v-col>
+            </v-row>
+            <v-row no-gutters>
               <v-col
-                cols="12"
-                sm="6"
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Auth</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
+                md="4"
+              >
+                <v-switch
+                  v-model="closeOnClick"
+                ></v-switch>
+              </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Portal URL</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
                 md="4"
               >
                 <v-text-field
-                  label="Gateway ID"
                   required
-                  solo
+                  outlined
+                  dense
                 ></v-text-field>
               </v-col>
+            </v-row>
+            <v-row no-gutters>
               <v-col
-                cols="12"
-                sm="6"
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Portal IP</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
+                md="4"
+              >
+                <v-text-field
+                  required
+                  outlined
+                  dense
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Gateway ID</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
+                md="4"
+              >
+                <v-text-field
+                  required
+                  outlined
+                  dense
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col
+                cols="1"
+                md="1"
+              >
+              <v-subheader>Seamless Online</v-subheader>
+              </v-col>
+              <v-col
+                cols="4"
+                md="4"
               >
                 <v-checkbox
                   v-model="checkbox"
-                  label="Seamless online"
                 ></v-checkbox>
               </v-col>
             </v-row>
-          </v-container>
           <small>*indicates required field</small>
         </v-card-text>
         <v-card-actions>
