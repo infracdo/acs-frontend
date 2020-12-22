@@ -1,0 +1,32 @@
+schema{
+    query:Query
+}
+
+type devices{
+    id: ID!
+    serial_num: String!
+    model: String!
+    manufacturer: String!
+    oui: String!
+    hardware_ver: String!
+    root_fs_ver: String!
+    firmware_ver: String!
+    ap_mode: String!
+    mac_address: String!
+    os_type: String!
+    host_name: String!
+    max_users: String!
+    ip: String!
+    last_reboot: String!
+    last_boot: String!
+    root_data_model: String!
+    web_auth: String!
+}
+
+type Query{
+
+  getAllDevices: [devices]!
+  getDevicesByID(id:ID):[devices]!
+  getDevicesBySerialNum(serial_num:String):devices!
+
+}
