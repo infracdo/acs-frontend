@@ -97,6 +97,7 @@ export default {
           icon: 'mdi-account',
           href: '#',
           title: 'toolbar.profile',
+          disabled: true,
           click: (e) => {
             console.log(e);
           },
@@ -105,6 +106,7 @@ export default {
           icon: 'mdi-settings',
           href: '#',
           title: 'toolbar.settings',
+          disabled: true,
           click: () => {
             console.log('this.toggleSettingsPanel()');
             this.toggleSettingsPanel();
@@ -114,6 +116,7 @@ export default {
           icon: 'mdi-exit-to-app',
           href: '#',
           title: 'toolbar.logout',
+          disabled: !this.$keycloak.authenticated,
           click: () => {
             this.logout();
           },
@@ -131,11 +134,14 @@ export default {
   },
   methods: {
     logout() {
-      this.$store.dispatch('LogOut');
-      this.$router.push('/singin');
+      // this.$store.dispatch('LogOut');
+      // this.$router.push('/signin');
+      this.$keycloak.logoutFn({
+        logoutRedirectUri: window.location.host,
+      });
     },
     toggleSettingsPanel() {
-      console.log('this.toggleSettingsPanel()111');
+      console.log('this.toggleSettingsPanel()');
       this.$vuetify.goTo(0);
       this.$store.dispatch('SettingsPanelToggle');
     },

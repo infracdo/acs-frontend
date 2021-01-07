@@ -444,18 +444,25 @@ import http from "@/http-common";
       save () {
         if (this.editedIndex > -1) {
           Object.assign(this.ssid[this.editedIndex], this.editedItem)
+            http
+              .put("/updatessid/" + this.editedItem.id, this.editedItem)
+              .then(response => {
+                console.log(response.data);
+              })
+              .catch(e => {
+                console.log(e);
+              });
         } else {
           this.ssid.push(this.editedItem)
+            http
+                .post("/addssid", this.editedItem)
+                .then(response => {
+                console.log(response.data);
+                })
+                .catch(e => {
+                console.log(e);
+                });
         }
-
-        http
-            .post("/addssid", this.editedItem)
-            .then(response => {
-            console.log(response.data);
-            })
-            .catch(e => {
-            console.log(e);
-            });
         this.close()
       },
     },

@@ -1,5 +1,5 @@
 import NProgress from 'nprogress'; // progress bar
-import router from './index';
+import router, { asyncRoutes } from './index';
 import store from '../store';
 import authRouter from './modules/auth';
 import 'nprogress/nprogress.css'; // progress bar style
@@ -21,6 +21,7 @@ console.log('[router.whiteList]', whiteList);
  * @param {Array} roles
  * @param {Array} permissionRoles
  */
+// eslint-disable-next-line no-unused-vars
 function hasPermission(roles, permissionRoles) {
   if (roles.includes('admin')) return true;
   if (!permissionRoles) return true;
@@ -29,66 +30,86 @@ function hasPermission(roles, permissionRoles) {
 
 router.beforeEach(async (to, from, next) => {
   NProgress.start();
-  let logMsg = '[router.beforeEach]';
-  try {
-    // determine if there has token
-    if (store.getters.token) {
-      logMsg += '\t[token]';
-      if (whiteList.includes(to.path)) {
-        logMsg += '\t[whiteList]';
-        next({ path: '/' });
-      } else {
-        logMsg += '\t[!whiteList]';
-        if (!store.getters.roles || store.getters.roles.length === 0) {
-          logMsg += `\t[roles=${store.getters.roles}]`;
-          // Determine whether the current user has pulled the user_info information
-          await store.dispatch('GetUserInfo');
-          if (!store.getters.user || !store.getters.user.roles) {
-            logMsg += '\t[LogOut]\t[next /]';
-            await store.dispatch('LogOut');
-            next({ path: '/' });
-          }
-
-          // note: roles must be a object array! such as:
-          // [{id: '1', name: 'editor'}, {id: '2', name: 'developer'}]
-          await store.dispatch('GenerateRoutes', store.getters.user);
-          if (!store.getters.permissionRoutes) {
-            logMsg += '\t[Redirect]\t[next /]';
-            next({ path: '/' });
-          }
-
-          // Hack method to ensure that addRoutes is complete,
-          // set the replace: true so the navigation will not leave a history record
-          next({ ...to, replace: true });
-        } else {
-          logMsg += `\t[roles=${store.getters.roles}]`;
-          // No need to dynamically change permissions can be directly next()
-          // delete the following permission judgment ↓
-          if (hasPermission(store.getters.roles, to.meta.roles)) {
-            logMsg += `\t[Permission=${to.meta.roles}]\t[next]`;
-            next();
-          } else {
-            logMsg += `\t[!Permission=${to.meta.roles}]\t[next /401]`;
-            next({ path: '/401', replace: true, query: { noGoBack: true } });
-          }
-        }
-      }
-    } else {
-      logMsg += '\t[!token]';
-      if (whiteList.includes(to.path)) {
-        logMsg += '\t[whiteList]';
-        next();
-      } else {
-        logMsg += '\t[!whiteList]';
-        next(`/singin?redirect=${to.path}`);
-      }
-    }
-  } catch (err) {
-    console.warn(`[router.beforeEach]\t${to.path}: ${err}`);
+  if (router.app.$keycloak.authenticated) {
+    const profile = await router.app.$keycloak.loadUserProfile();
+    console.log(profile);
+    store.commit('SET_USER_INFO', {
+      user: profile.username,
+      name: `${profile.firstName} ${profile.lastName}`,
+    });
+    store.commit('SET_ROUTES', asyncRoutes);
+    next();
+  } else {
+    const loginUrl = router.app.$keycloak.createLoginUrl({
+      redirectUri: to.path,
+    });
+    window.location.replace(loginUrl);
   }
-  console.log(logMsg, to.path);
   NProgress.done();
 });
+
+// router.beforeEach(async (to, from, next) => {
+//   NProgress.start();
+//   let logMsg = '[router.beforeEach]';
+//   try {
+//     // determine if there has token
+//     if (store.getters.token) {
+//       logMsg += '\t[token]';
+//       if (whiteList.includes(to.path)) {
+//         logMsg += '\t[whiteList]';
+//         next({ path: '/' });
+//       } else {
+//         logMsg += '\t[!whiteList]';
+//         if (!store.getters.roles || store.getters.roles.length === 0) {
+//           logMsg += `\t[roles=${store.getters.roles}]`;
+//           // Determine whether the current user has pulled the user_info information
+//           await store.dispatch('GetUserInfo');
+//           if (!store.getters.user || !store.getters.user.roles) {
+//             logMsg += '\t[LogOut]\t[next /]';
+//             await store.dispatch('LogOut');
+//             next({ path: '/' });
+//           }
+
+//           // note: roles must be a object array! such as:
+//           // [{id: '1', name: 'editor'}, {id: '2', name: 'developer'}]
+//           await store.dispatch('GenerateRoutes', store.getters.user);
+//           if (!store.getters.permissionRoutes) {
+//             logMsg += '\t[Redirect]\t[next /]';
+//             next({ path: '/' });
+//           }
+
+//           // Hack method to ensure that addRoutes is complete,
+//           // set the replace: true so the navigation will not leave a history record
+//           next({ ...to, replace: true });
+//         } else {
+//           logMsg += `\t[roles=${store.getters.roles}]`;
+//           // No need to dynamically change permissions can be directly next()
+//           // delete the following permission judgment ↓
+//           if (hasPermission(store.getters.roles, to.meta.roles)) {
+//             logMsg += `\t[Permission=${to.meta.roles}]\t[next]`;
+//             next();
+//           } else {
+//             logMsg += `\t[!Permission=${to.meta.roles}]\t[next /401]`;
+//             next({ path: '/401', replace: true, query: { noGoBack: true } });
+//           }
+//         }
+//       }
+//     } else {
+//       logMsg += '\t[!token]';
+//       if (whiteList.includes(to.path)) {
+//         logMsg += '\t[whiteList]';
+//         next();
+//       } else {
+//         logMsg += '\t[!whiteList]';
+//         next(`/signin?redirect=${to.path}`);
+//       }
+//     }
+//   } catch (err) {
+//     console.warn(`[router.beforeEach]\t${to.path}: ${err}`);
+//   }
+//   console.log(logMsg, to.path);
+//   NProgress.done();
+// });
 
 router.afterEach(async () => {
   NProgress.done();
