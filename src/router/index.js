@@ -5,7 +5,7 @@ import Layout from '@/views/layout/TheLayout.vue';
 
 /* Router Modules */
 // import vuetifyRouter from '@/demo/router/vuetify';
-import nestedRouter from '@/demo/router/nested';
+//import nestedRouter from '@/demo/router/nested';
 // import componentsRouter from '@/demo/router/components';
 import authRouter from './modules/auth';
 // import errorsRouter from './modules/errors';
@@ -119,10 +119,10 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        path: '/devices',
+        path: '/Configuration',
         component: () => import('@/views/components/I18n.vue'),
-        name: 'devices',
-        meta: { title: 'devices', icon: 'mdi-sitemap' },
+        name: 'Configuration',
+        meta: { title: 'Configuration', icon: 'mdi-access-point' },
       },
     ],
   },
@@ -131,10 +131,10 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        path: '/Administration',
+        path: '/Groups',
         component: () => import('@/views/components/Administration.vue'),
-        name: 'Administration',
-        meta: { title: 'Administration', icon: 'mdi-account-group' },
+        name: 'Groups',
+        meta: { title: 'Groups', icon: 'mdi-account-group' },
       },
     ],
   },
@@ -143,10 +143,10 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        path: '/sample',
+        path: '/Devices',
         component: () => import('@/views/components/sample.vue'),
-        name: 'sample',
-        meta: { title: 'sample', icon: 'mdi-account-group' },
+        name: 'Devices',
+        meta: { title: 'Devices', icon: 'mdi-server-network' },
       },
     ],
   },
@@ -164,7 +164,7 @@ export const asyncRoutes = [
   // permissionRouter,
   // vuetifyRouter,
   // ...componentsRouter,
-  nestedRouter,
+  //nestedRouter,
   // errorsRouter,
   { path: '*', redirect: '/error/404', hidden: true },
 ];

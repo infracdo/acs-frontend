@@ -2,14 +2,13 @@
   <v-data-table
     :headers="headers"
     :items="ssid"
-    sort-by="calories"
     class="elevation-1"
   >
     <template v-slot:top>
       <v-toolbar
         flat
       >
-        <v-toolbar-title>SSID</v-toolbar-title>
+        <v-toolbar-title>Wireless Configuration</v-toolbar-title>
         <v-divider
           class="mx-4"
           inset

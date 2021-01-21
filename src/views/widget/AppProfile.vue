@@ -94,25 +94,6 @@ export default {
     return {
       menuitems: [
         {
-          icon: 'mdi-account',
-          href: '#',
-          title: 'toolbar.profile',
-          disabled: true,
-          click: (e) => {
-            console.log(e);
-          },
-        },
-        {
-          icon: 'mdi-settings',
-          href: '#',
-          title: 'toolbar.settings',
-          disabled: true,
-          click: () => {
-            console.log('this.toggleSettingsPanel()');
-            this.toggleSettingsPanel();
-          },
-        },
-        {
           icon: 'mdi-exit-to-app',
           href: '#',
           title: 'toolbar.logout',
