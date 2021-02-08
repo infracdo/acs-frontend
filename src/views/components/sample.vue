@@ -41,6 +41,17 @@
               New Device
             </v-btn>
           </template>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              color="primary"
+              dark
+              class="mb-2"
+              v-bind="attrs"
+              v-on="on"
+            >
+              New Device
+            </v-btn>
+          </template>
           <v-card>
             <v-card-title>
               <span class="headline">{{ formTitle }}</span>
