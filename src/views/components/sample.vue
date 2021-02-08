@@ -13,13 +13,17 @@
       <v-toolbar
         flat
       >
-      <v-menu offset-y>
+      <v-menu offset-y v-if="selected.length>0">
         <template v-slot:activator="{ on, attrs }">
-           <v-app-bar-nav-icon
-              v-bind="attrs"
-              v-on="on"
+          <v-btn
+            color="primary"
+            dark
+            v-bind="attrs"
+            v-on="on"
+            icon
           >
-        </v-app-bar-nav-icon>
+            <v-icon dark>mdi-dots-vertical</v-icon>
+          </v-btn>
         </template>
         <v-list>
           <v-list-item
@@ -73,8 +77,11 @@
               outlined
               type="error"
             >"Serial number Already Exist"</v-alert>
-
-
+          <v-form
+            ref="form"
+            v-model="valid"
+            lazy-validation
+          >
             <v-card-text>
                     <v-row no-gutters>
                     <v-col
@@ -90,13 +97,14 @@
                         <v-text-field
                         v-model="editedItem.serial_number"
                         :disabled="editedIndex!=-1"
+                        :rules="serialRules"
                         required
                         outlined
                         dense
                         @focus="alert=false"
                         ></v-text-field>
                     </v-col>
-                    <v-spacer />
+                    <v-spacer></v-spacer>
                     <v-col
                         cols="1"
                         md="1"
@@ -110,6 +118,8 @@
                         <v-select
                         :items="group_list"
                         v-model="editedItem.parent"
+                        item-value="editedItem.parent[0]"
+                        :rules="[v => !!v || 'Group is required']"
                         outlined
                         dense
                         ></v-select>
@@ -128,6 +138,7 @@
                     >
                         <v-text-field
                         v-model="editedItem.device_name"
+                        :rules="[v => !!v || 'name is required']"
                         required
                         outlined
                         dense
@@ -146,6 +157,7 @@
                 Cancel
               </v-btn>
               <v-btn
+                :disabled="!vsave"
                 color="blue darken-1"
                 text
                 @click="save"
@@ -153,6 +165,7 @@
                 Save
               </v-btn>
             </v-card-actions>
+            </v-form>
           </v-card>
         </v-dialog>
         <v-dialog v-model="dialogDelete" max-width="500px">
@@ -184,8 +197,8 @@
           <v-card>
                     <v-row no-gutters class="mx-4">
                     <v-col
-                        cols="4"
-                        md="4"
+                        cols="8"
+                        md="8"
                     >
                         <v-text-field
                         v-model="getcode"
@@ -196,10 +209,16 @@
                         ></v-text-field>
                     </v-col>
                     <v-col
+                        cols="2"
+                        md="2"
+                    >
+                    <v-btn color="blue darken-1" text @click="sendcode(getcode)" class="mt-2">send code</v-btn>
+                    </v-col>
+                    <v-col
                         cols="1"
                         md="1"
                     >
-                    <v-btn color="blue darken-1" text @click="sendcode(getcode)" class="mt-2">send code</v-btn>
+                    <v-btn color="blue darken-1" text @click="code=''" class="mt-2">clear</v-btn>
                     </v-col>
                     </v-row>
           </v-card>
@@ -238,6 +257,8 @@ import http from "@/http-common";
 import config from "@/http-config";
   export default {
     data: () => ({
+      vsave: false,
+      valid: true,
       singleSelect: false,
       alert: false,
       selected: [],
@@ -259,10 +280,15 @@ import config from "@/http-config";
           value: 'device_name',
         },
         { text: 'Serial number', value: 'serial_number' },
-        { text: 'Parent', value: 'parent' },
+        { text: 'Group', value: 'parent' },
         { text: 'Mac address', value: 'mac_address' },
         { text: 'Action', value: 'actions', sortable: false },
       ],
+    serialRules: [
+      v => !!v || 'Serial is required',
+      v => (v && v.length <= 10) || 'Invalid Serial',
+      v => (v && v.length >= 14) || 'Invalid Serial',
+    ],
       group_list: [],
       serial_list: [],
       device: [],
@@ -282,7 +308,7 @@ import config from "@/http-config";
         group_name: '',
         location: '',
         mac_address: '',
-        parent: '',
+        parent: '/apollo',
         serial_number: '',
       },
       defaultItem: {
@@ -426,6 +452,8 @@ import config from "@/http-config";
         this.code += this.apname + text + "\n";
       },
       close () {
+        vsave = false;
+        this.$refs.form.resetValidation()
         this.dialog = false
         this.$nextTick(() => {
           this.editedItem = Object.assign({}, this.defaultItem)
@@ -442,40 +470,41 @@ import config from "@/http-config";
       },
 
       save () {
-        if (this.editedIndex > -1) {
+        if(this.valid){
+          if (this.editedIndex > -1) {
+            Object.assign(this.device[this.editedIndex], this.editedItem)
 
-          Object.assign(this.device[this.editedIndex], this.editedItem)
-
-            http
-              .put("/updatedevice/" + this.editedItem.id, this.editedItem)
-              .then(response => {
-                console.log(response.data);
-              })
-              .catch(e => {
-                console.log(e);
-              });
-              this.close()
-
-        } else {
-          var i, x = new Array(), c=true;
-          
-          for (i in this.device) {
-            if(this.device[i].serial_number==this.editedItem.serial_number){
-              c=false;
-            }
-          }
-          if(c){
-          this.device.push(this.editedItem)
-            http
-                .post("/adddevice", this.editedItem)
+              http
+                .put("/updatedevice/" + this.editedItem.id, this.editedItem)
                 .then(response => {
-                console.log(response.data);
+                  console.log(response.data);
                 })
                 .catch(e => {
-                console.log(e);
+                  console.log(e);
                 });
-               this.close()
-          }else this.alert=true;
+                this.close()
+
+          } else {
+            var i, x = new Array(), c=true;
+            
+            for (i in this.device) {
+              if(this.device[i].serial_number==this.editedItem.serial_number){
+                c=false;
+              }
+            }
+            if(c){
+            this.device.push(this.editedItem)
+              http
+                  .post("/adddevice", this.editedItem)
+                  .then(response => {
+                  console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+                this.close()
+            }else this.alert=true;
+          }
         }
       },
     },

@@ -373,7 +373,7 @@
   <v-expansion-panel-content>
   <v-data-table
     :headers="cliheaders"
-    :items="command_list"
+    :items="command"
     class="elevation-1"
   >
     <template v-slot:top>
@@ -416,7 +416,7 @@
                     >
                         <v-select
                         v-model="citems.model"
-                        :items="['AP520(W2)', 'AP520-I(G2)', 'AP630(IDA2)']"
+                        :items="['ALL','AP520(W2)', 'AP520-I(G2)', 'AP630(IDA2)']"
                         small-chips
                         outlined
                         dense
@@ -489,8 +489,8 @@
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="blue darken-1" text @click="closeDelete">Cancel</v-btn>
-              <v-btn color="blue darken-1" text @click="deleteItemConfirm">OK</v-btn>
+              <v-btn color="blue darken-1" text @click="ccloseDelete">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="cdeleteItemConfirm">OK</v-btn>
               <v-spacer></v-spacer>
             </v-card-actions>
           </v-card>
@@ -562,9 +562,11 @@ import config from "@/http-config";
       all_ssid: [],
       device: [],
       all_device: [],
+      device: [],
+      all_device: [],
       wlanid: [],
-
-      command_list: [],
+      all_command: [],
+      command: [],
       editedIndex: -1,
       cIndex: -1,
       editedItem: {
@@ -673,7 +675,7 @@ import config from "@/http-config";
       http
         .get("/getcommand")
         .then(response => {
-          this.command_list = response.data; // JSON are parsed automatically.
+          this.all_command = response.data; // JSON are parsed automatically.
           console.log(response.data);
         })
         .catch(e => {
@@ -695,7 +697,7 @@ import config from "@/http-config";
       },
 
       ceditItem (item) {
-        this.cIndex = this.command_list.indexOf(item)
+        this.cIndex = this.command.indexOf(item)
         this.citems = Object.assign({}, item)
         this.cdialog = true
       },
@@ -709,6 +711,7 @@ import config from "@/http-config";
       deleteItemConfirm () {
         this.ssid.splice(this.editedIndex, 1)
         this.closeDelete()
+        var i;
         http
             .delete("/deletessid/" + this.editedItem.id)
             .then(response => {
@@ -717,28 +720,30 @@ import config from "@/http-config";
             .catch(e => {
             console.log(e);
             });
-        config
-            .get("/DeleteObject/G1LQCLC017117, Device.WiFi.SSID."+this.editedItem.wlan_id+".")
-            .then(response => {
-            console.log(response.data);
-            })
-            .catch(e => {
-            console.log(e);
-            });
+        for (i in this.device) {
+          config
+              .get("/DeleteObject/"+this.device[i].serial_number+", Device.WiFi.SSID."+this.editedItem.wlan_id+".")
+              .then(response => {
+              console.log(response.data);
+              })
+              .catch(e => {
+              console.log(e);
+              });
+        }
 
       },
 
       cdeleteItem (item) {
-        this.cIndex = this.command_list.indexOf(item)
+        this.cIndex = this.command.indexOf(item)
         this.citems = Object.assign({}, item)
         this.cdialogDelete = true
       },
 
       cdeleteItemConfirm () {
-        this.command_list.splice(this.cIndex, 1)
+        this.command.splice(this.cIndex, 1)
         this.ccloseDelete()
         http
-            .delete("/deletecommand/" + this.editedItem.id)
+            .delete("/deletecommand/" + this.citems.id)
             .then(response => {
             console.log(response.data);
             })
@@ -772,15 +777,19 @@ import config from "@/http-config";
       },
 
       ssidlist () {
-          var i, x = new Array(), y = new Array();
+          var i, x = new Array(), y = new Array(), z = new Array();
           for (i in this.all_ssid) {
             if(this.all_ssid[i].parent.includes(this.editedItem.parent)) x[i] = this.all_ssid[i];
           };
           for (i in this.all_device) {
             if(this.all_device[i].parent.includes(this.editedItem.parent)) y[i] = this.all_device[i];
           };
+          for (i in this.all_command) {
+            if(this.all_command[i].parent.includes(this.editedItem.parent)) z[i] = this.all_command[i];
+          };
           this.ssid = x;
           this.device = y;
+          this.command = z;
       },
       cclose () {
         this.cdialog = false
@@ -791,7 +800,7 @@ import config from "@/http-config";
       },
       csave () {
         if (this.cIndex > -1) {
-          Object.assign(this.command_list[this.cIndex], this.citems)
+          Object.assign(this.command[this.cIndex], this.citems)
             http
               .put("/updatecommands/" + this.citems.id, this.citems)
               .then(response => {
@@ -814,18 +823,17 @@ import config from "@/http-config";
           
           console.log("command: " + body);
           //var body = "'{,Device.WiFi.SSID."+"5"+".SSID:"+"notNewSSID"+",Device.WiFi.SSID."+"5"+".LowerLayers:1&2,Device.WiFi.SSID.5.X_WWW-RUIJIE-COM-CN_IsHidden:false,Device.WiFi.SSID."+"5"+".X_WWW-RUIJIE-COM-CN_FowardType:Bridge,Device.WiFi.SSID.5.X_WWW-RUIJIE-COM-CN_VLANID:1,Device.WiFi.AccessPoint.5.Security.ModeEnabled:WPA2-Personal,Device.WiFi.AccessPoint.5.Security.KeyPassphrase:StudyInScarlet123,}'"
-          this.command_list.push(this.citems)
-          console.log(body);
-          for (i in this.device) {
+          this.command.push(this.citems)
             http
                 .post("/addcommand", this.citems)
                 .then(response => {
-                this.command_list = response.data
+                this.command = response.data
                 console.log(response.data);
                 })
                 .catch(e => {
                 //console.log(e);
                 });
+          for (i in this.device) {
             config
                 .post("/Command/"+this.device[i].serial_number, body)
                 .then(response => {
@@ -870,7 +878,6 @@ import config from "@/http-config";
           console.log(body);
           console.log(abody);
           var i;
-          for (i in this.device) {
             http
                 .post("/addssid", this.editedItem)
                 .then(response => {
@@ -879,6 +886,7 @@ import config from "@/http-config";
                 .catch(e => {
                 console.log(e);
                 });
+          for (i in this.device) {
             config
                 .post("/AddSSID/"+this.device[i].serial_number+", "+v, body)
                 .then(response => {
