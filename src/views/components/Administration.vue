@@ -198,7 +198,7 @@ import http from "@/http-common";
         date_modified: '',
         group_name: '',
         location: '',
-        parent: 'root',
+        parent: '',
       },
     }),
 

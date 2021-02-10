@@ -66,17 +66,6 @@
               New Device
             </v-btn>
           </template>
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn
-              color="primary"
-              dark
-              class="mb-2"
-              v-bind="attrs"
-              v-on="on"
-            >
-              New Device
-            </v-btn>
-          </template>
           <v-card>
             <v-card-title>
               <span class="headline">{{ formTitle }}</span>
@@ -168,7 +157,7 @@
                 Cancel
               </v-btn>
               <v-btn
-                :disabled="!vsave"
+                :disabled="!valid || !!!editedItem.device_name || !!!editedItem.parent || !!!editedItem.serial_number"
                 color="blue darken-1"
                 text
                 @click="save"
@@ -177,6 +166,38 @@
               </v-btn>
             </v-card-actions>
             </v-form>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="dialogMove" max-width="600px">
+          <v-card>
+            <v-card-title> Select Group </v-card-title>
+                <v-row no-gutters>
+                    <v-col
+                        cols="3"
+                        md="3"
+                    >
+                    <v-subheader>Parent Group</v-subheader>
+                    </v-col>
+                    <v-col
+                        cols="6"
+                        md="6"
+                    >
+                        <v-select
+                        :items="group_list"
+                        v-model="editedItem.parent"
+                        item-value="editedItem.parent[0]"
+                        :rules="[v => !!v || 'Group is required']"
+                        outlined
+                        dense
+                        ></v-select>
+                    </v-col>
+                </v-row>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="closeMove">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="moveConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
           </v-card>
         </v-dialog>
         <v-dialog v-model="dialogDelete" max-width="500px">
@@ -268,10 +289,12 @@ import http from "@/http-common";
 import config from "@/http-config";
   export default {
     data: () => ({
-      vsave: false,
-      valid: true,
+      vsave: true,
+      valid: false,
       singleSelect: false,
       alert: false,
+      parent_watcher: '',
+      serialList: [],
       selected: [],
       search: '',
       code: '',
@@ -282,6 +305,7 @@ import config from "@/http-config";
       dialog: false,
       dialogDelete: false,
       dialogcli: false,
+      dialogMove: false,
       headers: [
         { text: 'Status', value: 'status' },
         {
@@ -297,8 +321,8 @@ import config from "@/http-config";
       ],
     serialRules: [
       v => !!v || 'Serial is required',
-      v => (v && v.length <= 10) || 'Invalid Serial',
-      v => (v && v.length >= 14) || 'Invalid Serial',
+      v => (v && v.length >= 10) || 'Invalid Serial',
+      v => (v && v.length <= 14) || 'Invalid Serial',
     ],
       group_list: [],
       serial_list: [],
@@ -375,7 +399,14 @@ import config from "@/http-config";
         .get("/getdevice")
         .then(response => {
           this.device = response.data; // JSON are parsed automatically.
-          console.log(response.data);
+          var i;
+          for(i in response.data){
+            this.serialList.push(response.data[i].serial_number)
+          }
+
+          this.serialRules.push(v => this.serialList.indexOf(v) < 0|| 'Serial already exist');
+
+          
         })
         .catch(e => {
           console.log(e);
@@ -384,9 +415,40 @@ import config from "@/http-config";
 
 
       editItem (item) {
+        this.parent_watcher = item.parent
         this.editedIndex = this.device.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.dialog = true
+      },
+
+      closeMove () {
+        this.dialogMove = false;
+      },
+
+
+      moveConfirm () {
+        var i, x = new Array();
+        for (i in this.selected) {
+          this.device[this.device.indexOf(this.selected[i])].parent = this.editedItem.parent
+          this.editedItem = Object.assign({}, this.device[this.device.indexOf(this.selected[i])])
+              http
+                .put("/updatedevice/" + this.editedItem.id, this.editedItem)
+                .then(response => {
+                  console.log(response.data);
+                })
+                .catch(e => {
+                  console.log(e);
+                });
+                this.closeMove()
+              config
+                  .get("/MoveDeviceGroup/"+this.selected[i].serial_number)
+                  .then(response => {
+                  console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+        }
       },
 
       deleteItem (item) {
@@ -440,6 +502,23 @@ import config from "@/http-config";
           };
 
         }
+        else if(index==1){
+          this.dialogMove = true
+          var i, x = new Array();
+          for (i in this.selected) {
+       /* config
+            .get("/MoveDeviceGroup/"+this.selected[i].serial_number)
+            .then(response => {
+            console.log(response.data);
+            })
+            .catch(e => {
+            console.log(e);
+            });
+            console.log(this.selected[i].id);*/
+          };
+          
+
+        }
       },
       opencli (item) {
         this.dialogcli = true;
@@ -463,7 +542,7 @@ import config from "@/http-config";
         this.code += this.apname + text + "\n";
       },
       close () {
-        vsave = false;
+        this.valid = false;
         this.$refs.form.resetValidation()
         this.dialog = false
         this.$nextTick(() => {
@@ -484,7 +563,6 @@ import config from "@/http-config";
         if(this.valid){
           if (this.editedIndex > -1) {
             Object.assign(this.device[this.editedIndex], this.editedItem)
-
               http
                 .put("/updatedevice/" + this.editedItem.id, this.editedItem)
                 .then(response => {
@@ -494,6 +572,16 @@ import config from "@/http-config";
                   console.log(e);
                 });
                 this.close()
+            if(this.parent_watcher!=this.editedItem.parent){
+              config
+                  .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
+                  .then(response => {
+                  console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+            }
 
           } else {
             var i, x = new Array(), c=true;
@@ -508,7 +596,8 @@ import config from "@/http-config";
               http
                   .post("/adddevice", this.editedItem)
                   .then(response => {
-                  console.log(response.data);
+                  this.device[this.devicelastIndexOf()].id = response.data.id;
+                  console.log(this.editedItem);
                   })
                   .catch(e => {
                   console.log(e);

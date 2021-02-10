@@ -19,7 +19,7 @@ Vue.use(VueAxios, axios);
 
 Vue.use(VueKeyCloak, {
   init: {
-    onLoad: 'login-required',
+    onLoad: 'login-required', "checkLoginIframe" : false
   },
   config: {
     realm: 'acs-test-realm',

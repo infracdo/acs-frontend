@@ -18,6 +18,7 @@
         <v-autocomplete
         :items="group_list"
         v-model="editedItem.parent"
+        item-value="editedItem.parent[0]"
         hide-selected
         hint="Select Group"
         persistent-hint
@@ -38,6 +39,7 @@
               class="mb-2"
               v-bind="attrs"
               v-on="on"
+              @click="editedItem.wlan_id=wlanid[0]"
             >
               New SSID
             </v-btn>
@@ -46,7 +48,11 @@
             <v-card-title>
               <span class="headline">{{ formTitle }}</span>
             </v-card-title>
-
+          <v-form
+            ref="form"
+            v-model="valid"
+            lazy-validation
+          >
             <v-card-text>
                     <v-row no-gutters>
                     <v-col
@@ -61,7 +67,9 @@
                     >
                         <v-select
                         :items="wlanid"
+                        :disabled="formTitle!='New SSID'"
                         v-model="editedItem.wlan_id"
+                        :label="editedItem.wlan_id.toString()"
                         outlined
                         dense
                         ></v-select>
@@ -98,6 +106,7 @@
                     >
                         <v-text-field
                         v-model="editedItem.ssid"
+                        :rules="ssidRules"
                         required
                         outlined
                         dense
@@ -156,6 +165,7 @@
                     >
                         <v-text-field
                         v-model="editedItem.passphrase"
+                        :rules="[v => (v || '').length >= 8 || 'Password too short']"
                         required
                         outlined
                         dense
@@ -246,6 +256,7 @@
                         v-model="editedItem.portal_url"
                         required
                         outlined
+                        :rules="portalRules"
                         dense
                         ></v-text-field>
                     </v-col>
@@ -263,6 +274,7 @@
                     >
                         <v-text-field
                         v-model="editedItem.portal_ip"
+                        :rules="ipRules"
                         required
                         outlined
                         dense
@@ -305,6 +317,7 @@
                     </v-col>
                     </v-row>
             </v-card-text>
+          </v-form>
 
             <v-card-actions>
               <v-spacer></v-spacer>
@@ -318,6 +331,7 @@
               <v-btn
                 color="blue darken-1"
                 text
+                :disabled="!valid || !!!editedItem.ssid"
                 @click="save"
               >
                 Save
@@ -534,6 +548,7 @@ import config from "@/http-config";
 
   export default {
     data: () => ({
+      valid: false,
       cdialog: false,
       dialog: false,
       dialogDelete: false,
@@ -545,9 +560,9 @@ import config from "@/http-config";
           sortable: false,
           value: 'ssid',
         },
+        { text: 'wlan ID', value: 'wlan_id' },
         { text: 'Encryption Mode', value: 'encryption_mode' },
         { text: 'Portal url', value: 'portal_url' },
-        { text: 'Vlan ID', value: 'vlan_id' },
         { text: 'Gateway ID', value: 'gateway_id' },
         { text: 'Action', value: 'actions', sortable: false },
       ],
@@ -557,6 +572,7 @@ import config from "@/http-config";
         { text: 'Action', value: 'actions', sortable: false },
       ],
       group_list: [],
+      ssidList: [],
       group_parent: '',
       ssid: [],
       all_ssid: [],
@@ -573,7 +589,7 @@ import config from "@/http-config";
         id: '',
         wlan_id: '',
         ssid: '',
-        forward_mode: '',
+        forward_mode: 'Bridge',
         encryption_mode: 'Open',
         passphrase: '',
         portal_url: '',
@@ -590,14 +606,13 @@ import config from "@/http-config";
       defaultItem: {
         wlan_id: '',
         ssid: '',
-        forward_mode: 'bridge',
+        forward_mode: 'Bridge',
         encryption_mode: 'Open',
         portal_url: '',
         vlan_id: 1,
         uplink: 14400,
         downlink: 14400,
         limitless: false,
-        parent: '/apollo',
         auth: false,
         portal_ip: '',
         gateway_id: '',
@@ -609,6 +624,17 @@ import config from "@/http-config";
         command: '',
         parent: '',
       },
+      ssidRules: [
+        v => !!v || 'SSID is required',
+      ],
+      portalRules: [
+        v => !!v || 'url is required',
+        v => /.+\..+/.test(v) || 'url must must be valid',
+      ],
+      ipRules: [
+        v => !!v || 'IP is required',
+        v => /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(v) || 'ip must must be valid',
+      ],
     }),
 
     computed: {
@@ -638,9 +664,6 @@ import config from "@/http-config";
 
     methods: {
       initialize () {
-        for (var i = 1; i <= 32; i++) {
-            this.wlanid.push(i);
-        }
       http
         .get("/getdevice")
         .then(response => {
@@ -654,7 +677,7 @@ import config from "@/http-config";
         .get("/getssid")
         .then(response => {
           this.all_ssid = response.data; // JSON are parsed automatically.
-          console.log(response.data);
+          console.log(this.all_ssid[0].parent);
         })
         .catch(e => {
           console.log(e);
@@ -681,6 +704,9 @@ import config from "@/http-config";
         .catch(e => {
           console.log(e);
         });
+        for (var i = 1; i <= 32; i++) {
+            this.wlanid.push(i);
+        }
       },
 
       wlanid_array () {
@@ -753,6 +779,8 @@ import config from "@/http-config";
       },
 
       close () {
+        this.valid = false;
+        this.$refs.form.resetValidation()
         this.dialog = false
         this.$nextTick(() => {
           this.editedItem = Object.assign({}, this.defaultItem)
@@ -779,13 +807,18 @@ import config from "@/http-config";
       ssidlist () {
           var i, x = new Array(), y = new Array(), z = new Array();
           for (i in this.all_ssid) {
-            if(this.all_ssid[i].parent.includes(this.editedItem.parent)) x[i] = this.all_ssid[i];
+            if(this.editedItem.parent.startsWith(this.all_ssid[i].parent)){
+              x[i] = this.all_ssid[i];
+              this.wlanid.splice(this.wlanid.indexOf(this.all_ssid[i].wlan_id), 1)
+              this.ssidList.push(this.all_ssid[i].ssid)
+            }
           };
+          this.ssidRules.push(v => this.ssidList.indexOf(v) < 0|| 'SSID already exist');
           for (i in this.all_device) {
-            if(this.all_device[i].parent.includes(this.editedItem.parent)) y[i] = this.all_device[i];
+            if(this.editedItem.parent.includes(this.all_device[i].parent)) y[i] = this.all_device[i];
           };
           for (i in this.all_command) {
-            if(this.all_command[i].parent.includes(this.editedItem.parent)) z[i] = this.all_command[i];
+            if(this.editedItem.parent.includes(this.all_command[i].parent)) z[i] = this.all_command[i];
           };
           this.ssid = x;
           this.device = y;
@@ -800,17 +833,19 @@ import config from "@/http-config";
       },
       csave () {
         if (this.cIndex > -1) {
+          this.citems.parent = this.editedItem.parent
           Object.assign(this.command[this.cIndex], this.citems)
             http
-              .put("/updatecommands/" + this.citems.id, this.citems)
+              .put("/updatecommand/" + this.citems.id, this.citems)
               .then(response => {
                 console.log(response.data);
               })
               .catch(e => {
                 console.log(e);
+                console.log("hehe");
               });
         } else {
-
+          this.citems.parent = this.editedItem.parent
           var input_command= this.citems.command.split(/\n/g);
           var i, x = new Array(), body = '{';
 
@@ -875,6 +910,7 @@ import config from "@/http-config";
           var body = "'{,Device.WiFi.SSID."+v+".SSID:"+this.editedItem.ssid+",Device.WiFi.SSID."+v+".LowerLayers:1&2,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_IsHidden:false,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_FowardType:"+this.editedItem.forward_mode+",Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_VLANID:"+vid+",Device.WiFi.AccessPoint."+v+".Security.ModeEnabled:"+entype+",Device.WiFi.AccessPoint."+v+".Security.KeyPassphrase:"+passkey+",}'"
           var abody = "'{,WiFiDog,"+this.editedItem.portal_ip+","+this.editedItem.portal_url+",js,"+this.editedItem.gateway_id+",true,true}'"
           this.ssid.push(this.editedItem)
+          this.all_ssid.push(this.editedItem)
           console.log(body);
           console.log(abody);
           var i;
