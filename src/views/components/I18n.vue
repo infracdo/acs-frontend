@@ -429,9 +429,10 @@
                         md="8"
                     >
                         <v-select
-                        v-model="citems.model"
+                        v-model="modelArray"
                         :items="['ALL','AP520(W2)', 'AP520-I(G2)', 'AP630(IDA2)']"
                         small-chips
+                        multiple
                         outlined
                         dense
                         ></v-select>
@@ -548,11 +549,13 @@ import config from "@/http-config";
 
   export default {
     data: () => ({
+      modelArray: [],
       valid: false,
       cdialog: false,
       dialog: false,
       dialogDelete: false,
       cdialogDelete: false,
+      parent_watcher: '',
       headers: [
         {
           text: 'SSID',
@@ -674,15 +677,6 @@ import config from "@/http-config";
           console.log(e);
         });
       http
-        .get("/getssid")
-        .then(response => {
-          this.all_ssid = response.data; // JSON are parsed automatically.
-          console.log(this.all_ssid[0].parent);
-        })
-        .catch(e => {
-          console.log(e);
-        });
-      http
         .get("/getgroup")
         .then(response => {
           var i, x = new Array();
@@ -704,6 +698,17 @@ import config from "@/http-config";
         .catch(e => {
           console.log(e);
         });
+      http
+        .get("/getssid")
+        .then(response => {
+          this.all_ssid = response.data; // JSON are parsed automatically.
+          this.editedItem.parent = response.data[0].parent
+          this.ssidlist()
+          console.log(this.all_ssid[0].parent);
+        })
+        .catch(e => {
+          console.log(e);
+        });
         for (var i = 1; i <= 32; i++) {
             this.wlanid.push(i);
         }
@@ -717,14 +722,16 @@ import config from "@/http-config";
       },
 
       editItem (item) {
+        this.dialog = true
         this.editedIndex = this.ssid.indexOf(item)
         this.editedItem = Object.assign({}, item)
-        this.dialog = true
+        this.$refs.form.resetValidation()
       },
 
       ceditItem (item) {
         this.cIndex = this.command.indexOf(item)
         this.citems = Object.assign({}, item)
+        this.modelArray = this.citems.model.split(",")
         this.cdialog = true
       },
 
@@ -779,11 +786,13 @@ import config from "@/http-config";
       },
 
       close () {
-        this.valid = false;
         this.$refs.form.resetValidation()
+        this.parent_watcher = this.editedItem.parent
+        this.valid = false;
         this.dialog = false
         this.$nextTick(() => {
           this.editedItem = Object.assign({}, this.defaultItem)
+          this.editedItem.parent = this.parent_watcher
           this.editedIndex = -1
         })
       },
@@ -846,6 +855,7 @@ import config from "@/http-config";
               });
         } else {
           this.citems.parent = this.editedItem.parent
+          this.citems.model = this.modelArray.toString()
           var input_command= this.citems.command.split(/\n/g);
           var i, x = new Array(), body = '{';
 
@@ -862,22 +872,22 @@ import config from "@/http-config";
             http
                 .post("/addcommand", this.citems)
                 .then(response => {
-                this.command = response.data
                 console.log(response.data);
-                })
-                .catch(e => {
-                //console.log(e);
-                });
-          for (i in this.device) {
-            config
-                .post("/Command/"+this.device[i].serial_number, body)
-                .then(response => {
-                console.log(response.data);
-                console.log("bodysent" + body);
                 })
                 .catch(e => {
                 console.log(e);
                 });
+          for (i in this.device) {
+            if(this.modelArray.indexOf(this.device[0].model)>0 | this.modelArray.indexOf("ALL")){
+              config
+                  .post("/Command/"+this.device[i].serial_number, body)
+                  .then(response => {
+                  console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+            }
           }
 
         }

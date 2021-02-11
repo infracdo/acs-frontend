@@ -419,6 +419,7 @@ import config from "@/http-config";
         this.editedIndex = this.device.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.dialog = true
+        this.$refs.form.resetValidation()
       },
 
       closeMove () {
@@ -542,8 +543,8 @@ import config from "@/http-config";
         this.code += this.apname + text + "\n";
       },
       close () {
-        this.valid = false;
         this.$refs.form.resetValidation()
+        this.valid = false;
         this.dialog = false
         this.$nextTick(() => {
           this.editedItem = Object.assign({}, this.defaultItem)
