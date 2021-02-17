@@ -62,6 +62,7 @@
               class="mb-2"
               v-bind="attrs"
               v-on="on"
+              @click="initGroup"
             >
               New Device
             </v-btn>
@@ -70,13 +71,6 @@
             <v-card-title>
               <span class="headline">{{ formTitle }}</span>
             </v-card-title>
-            <v-alert
-              :value="alert"
-              transition="fade-transition"
-              dense
-              outlined
-              type="error"
-            >"Serial number Already Exist"</v-alert>
           <v-form
             ref="form"
             v-model="valid"
@@ -258,7 +252,14 @@
         </v-dialog>
       </v-toolbar>
     </template>
-    <template v-slot:item.actions="{ item }">
+    <template v-slot:[`item.status`]="{ item }">
+      <v-chip
+        :color="getColor(item.status)"
+      >
+        {{ item.status }}
+      </v-chip>
+    </template>
+    <template v-slot:[`item.actions`]="{ item }">
       <v-icon
         small
         class="mr-2"
@@ -363,19 +364,6 @@ import config from "@/http-config";
 
     computed: {
       formTitle () {
-      http
-        .get("/getgroup")
-        .then(response => {
-          var i, x = new Array();
-          for (i in response.data) {
-            x[i] = response.data[i].parent+'/'+response.data[i].group_name;
-          };
-          this.group_list = x;
-          console.log(response.data);
-        })
-        .catch(e => {
-          console.log(e);
-        });
         return this.editedIndex === -1 ? 'New Device' : 'Edit Device'
       },
     },
@@ -391,10 +379,20 @@ import config from "@/http-config";
 
     created () {
       this.initialize()
+      this.todo()
+      console.log ("hehe");
     },
-
+    beforeDestroy () {
+      clearInterval(this.timer)
+    },
     methods: {
+      todo: function(){           
+          this.timer = setInterval(function(){
+              this.initialize();
+          }.bind(this), 15000);
+      },
       initialize () {
+      console.log ("hehe");
       http
         .get("/getdevice")
         .then(response => {
@@ -404,7 +402,6 @@ import config from "@/http-config";
             this.serialList.push(response.data[i].serial_number)
           }
 
-          this.serialRules.push(v => this.serialList.indexOf(v) < 0|| 'Serial already exist');
 
           
         })
@@ -412,14 +409,37 @@ import config from "@/http-config";
           console.log(e);
         });
       },
-
+      getColor: function(status) {
+        if (status=='synching') return 'orange'
+        else if (status=='online') return 'green'
+        else return 'white'
+      },
 
       editItem (item) {
+        this.dialog = true
+        this.initGroup()
         this.parent_watcher = item.parent
         this.editedIndex = this.device.indexOf(item)
         this.editedItem = Object.assign({}, item)
-        this.dialog = true
-        this.$refs.form.resetValidation()
+        this.serialRules.splice(this.serialRules.lastIndexOf(), 1)
+      },
+
+      initGroup () {
+        http
+          .get("/getgroup")
+          .then(response => {
+            var i, x = new Array();
+            for (i in response.data) {
+              x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+            };
+            this.group_list = x;
+            if(!!!this.group_list) this.editedItem.parent = this.group_list[0];
+            console.log(response.data);
+          })
+          .catch(e => {
+            console.log(e);
+          });
+          this.serialRules.push(v => this.serialList.indexOf(v) < 0|| 'Serial already exist');
       },
 
       closeMove () {
@@ -548,6 +568,7 @@ import config from "@/http-config";
         this.dialog = false
         this.$nextTick(() => {
           this.editedItem = Object.assign({}, this.defaultItem)
+          this.editedItem.parent = this.group_list[0]
           this.editedIndex = -1
         })
       },

@@ -43,7 +43,11 @@
             <v-card-title>
               <span class="headline">{{ formTitle }}</span>
             </v-card-title>
-
+          <v-form
+            ref="form"
+            v-model="valid"
+            lazy-validation
+          >
             <v-card-text>
                     <v-row no-gutters>
                     <v-col
@@ -76,6 +80,7 @@
                     >
                         <v-text-field
                         v-model="editedItem.location"
+                        :rules="[v => !!v || 'Location is required']"
                         required
                         outlined
                         dense
@@ -95,6 +100,7 @@
                     >
                         <v-text-field
                         v-model="editedItem.group_name"
+                        :rules="[v => !!v || 'Group name cannot be empty']"
                         required
                         outlined
                         dense
@@ -102,7 +108,7 @@
                     </v-col>
                     </v-row>
             </v-card-text>
-
+          </v-form>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn
@@ -115,6 +121,7 @@
               <v-btn
                 color="blue darken-1"
                 text
+                :disabled="!valid || !!!editedItem.location || !!!editedItem.group_name"
                 @click="save"
               >
                 Save
@@ -167,6 +174,7 @@ import http from "@/http-common";
   export default {
     data: () => ({
       search: '',
+      valid: false,
       dialog: false,
       dialogDelete: false,
       headers: [
@@ -240,9 +248,9 @@ import http from "@/http-common";
       },
 
       editItem (item) {
+        this.dialog = true
         this.editedIndex = this.group.indexOf(item)
         this.editedItem = Object.assign({}, item)
-        this.dialog = true
       },
 
       deleteItem (item) {
@@ -265,6 +273,7 @@ import http from "@/http-common";
       },
 
       close () {
+        this.$refs.form.resetValidation()
         this.dialog = false
         this.$nextTick(() => {
           this.editedItem = Object.assign({}, this.defaultItem)

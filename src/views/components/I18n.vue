@@ -39,7 +39,7 @@
               class="mb-2"
               v-bind="attrs"
               v-on="on"
-              @click="editedItem.wlan_id=wlanid[0]"
+              @click="addrules"
             >
               New SSID
             </v-btn>
@@ -331,7 +331,7 @@
               <v-btn
                 color="blue darken-1"
                 text
-                :disabled="!valid || !!!editedItem.ssid"
+                :disabled="!valid || !!!editedItem.ssid || (!!!editedItem.passphrase&&editedItem.encryption_mode!='Open')"
                 @click="save"
               >
                 Save
@@ -407,6 +407,7 @@
               class="mb-2"
               v-bind="attrs"
               v-on="on"
+              @click="citems.model='ALL'"
             >
               New Command
             </v-btn>
@@ -415,7 +416,11 @@
             <v-card-title>
               <span class="headline">Command</span>
             </v-card-title>
-
+          <v-form
+            ref="cform"
+            v-model="cvalid"
+            lazy-validation
+          >
             <v-card-text>
                     <v-row no-gutters>
                     <v-col
@@ -431,6 +436,7 @@
                         <v-select
                         v-model="modelArray"
                         :items="['ALL','AP520(W2)', 'AP520-I(G2)', 'AP630(IDA2)']"
+                        :rules="[v => !!v || 'Group is required']"
                         small-chips
                         multiple
                         outlined
@@ -453,6 +459,7 @@
                         v-model="citems.description"
                         required
                         outlined
+                        :rules="[v => !!v || 'description is required']"
                         dense
                         ></v-text-field>
                     </v-col>
@@ -474,12 +481,13 @@
                         v-model="citems.command"
                         rows="9"
                         outlined
+                        :rules="[v => !!v || 'command cannot be empty']"
                         densed
                         ></v-textarea>
                     </v-col>
                     </v-row>
             </v-card-text>
-
+          </v-form>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn
@@ -492,6 +500,7 @@
               <v-btn
                 color="blue darken-1"
                 text
+                :disabled="!cvalid || !!!citems.model || !!!citems.description || !!!citems.command"
                 @click="csave"
               >
                 Save
@@ -551,6 +560,7 @@ import config from "@/http-config";
     data: () => ({
       modelArray: [],
       valid: false,
+      cvalid: false,
       cdialog: false,
       dialog: false,
       dialogDelete: false,
@@ -574,6 +584,8 @@ import config from "@/http-config";
         { text: 'Description', value: 'description' },
         { text: 'Action', value: 'actions', sortable: false },
       ],
+      list: [],
+      timer: '',
       group_list: [],
       ssidList: [],
       group_parent: '',
@@ -589,7 +601,7 @@ import config from "@/http-config";
       editedIndex: -1,
       cIndex: -1,
       editedItem: {
-        id: '',
+        id: 0,
         wlan_id: '',
         ssid: '',
         forward_mode: 'Bridge',
@@ -607,6 +619,7 @@ import config from "@/http-config";
         seamless: false,
       },
       defaultItem: {
+        model: 'ALL',
         wlan_id: '',
         ssid: '',
         forward_mode: 'Bridge',
@@ -677,19 +690,6 @@ import config from "@/http-config";
           console.log(e);
         });
       http
-        .get("/getgroup")
-        .then(response => {
-          var i, x = new Array();
-          for (i in response.data) {
-            x[i] = response.data[i].parent+'/'+response.data[i].group_name;
-          };
-          this.group_list = x;
-          console.log(response.data);
-        })
-        .catch(e => {
-          console.log(e);
-        });
-      http
         .get("/getcommand")
         .then(response => {
           this.all_command = response.data; // JSON are parsed automatically.
@@ -702,9 +702,19 @@ import config from "@/http-config";
         .get("/getssid")
         .then(response => {
           this.all_ssid = response.data; // JSON are parsed automatically.
-          this.editedItem.parent = response.data[0].parent
+        })
+      http
+        .get("/getgroup")
+        .then(response => {
+          var i, x = new Array();
+          for (i in response.data) {
+            x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+          };
+          this.group_list = x;
+          this.editedItem.parent = x[0];
+          console.log("group2: " + x[0]);
           this.ssidlist()
-          console.log(this.all_ssid[0].parent);
+          console.log(response.data);
         })
         .catch(e => {
           console.log(e);
@@ -723,9 +733,11 @@ import config from "@/http-config";
 
       editItem (item) {
         this.dialog = true
+        this.parent_watcher = this.editedItem.parent
         this.editedIndex = this.ssid.indexOf(item)
         this.editedItem = Object.assign({}, item)
-        this.$refs.form.resetValidation()
+        this.editedItem.parent = this.parent_watcher
+        this.ssidRules.splice(this.ssidRules.lastIndexOf(), 1)
       },
 
       ceditItem (item) {
@@ -822,18 +834,24 @@ import config from "@/http-config";
               this.ssidList.push(this.all_ssid[i].ssid)
             }
           };
-          this.ssidRules.push(v => this.ssidList.indexOf(v) < 0|| 'SSID already exist');
           for (i in this.all_device) {
-            if(this.editedItem.parent.includes(this.all_device[i].parent)) y[i] = this.all_device[i];
+            if(this.all_device[i].parent.includes(this.editedItem.parent)) y[i] = this.all_device[i];
           };
           for (i in this.all_command) {
-            if(this.editedItem.parent.includes(this.all_command[i].parent)) z[i] = this.all_command[i];
+            if(this.editedItem.parent.startsWith(this.all_command[i].parent)) z[i] = this.all_command[i];
           };
           this.ssid = x;
           this.device = y;
           this.command = z;
       },
+
+      addrules () {
+        this.ssidRules.push(v => this.ssidList.indexOf(v) < 0|| 'SSID already exist');
+        this.editedItem.wlan_id=this.wlanid[0];
+      },
+
       cclose () {
+        this.$refs.cform.resetValidation()
         this.cdialog = false
         this.$nextTick(() => {
           this.citems = Object.assign({}, this.defaultItem)
@@ -843,7 +861,18 @@ import config from "@/http-config";
       csave () {
         if (this.cIndex > -1) {
           this.citems.parent = this.editedItem.parent
+          this.citems.model = this.modelArray.toString()
           Object.assign(this.command[this.cIndex], this.citems)
+          var input_command= this.citems.command.split(/\n/g);
+          var i, x = new Array(), body = '{';
+
+          for (i in input_command) {
+            if(input_command[i]!='!') body += ', Command: ' + input_command[i];
+          };
+
+          body += ',}';
+          
+
             http
               .put("/updatecommand/" + this.citems.id, this.citems)
               .then(response => {
@@ -853,6 +882,19 @@ import config from "@/http-config";
                 console.log(e);
                 console.log("hehe");
               });
+          for (i in this.device) {
+            if(this.modelArray.indexOf(this.device[i].model)>0 || this.modelArray.indexOf("ALL")){
+              config
+                  .post("/Command/"+this.device[i].serial_number, body)
+                  .then(response => {
+                  console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+            }
+          }
+
         } else {
           this.citems.parent = this.editedItem.parent
           this.citems.model = this.modelArray.toString()
@@ -878,7 +920,7 @@ import config from "@/http-config";
                 console.log(e);
                 });
           for (i in this.device) {
-            if(this.modelArray.indexOf(this.device[0].model)>0 | this.modelArray.indexOf("ALL")){
+            if(this.modelArray.indexOf(this.device[i].model)>0 | this.modelArray.indexOf("ALL")){
               config
                   .post("/Command/"+this.device[i].serial_number, body)
                   .then(response => {
@@ -896,14 +938,51 @@ import config from "@/http-config";
       save () {
         if (this.editedIndex > -1) {
           Object.assign(this.ssid[this.editedIndex], this.editedItem)
-            http
-              .put("/updatessid/" + this.editedItem.id, this.editedItem)
-              .then(response => {
+          var v = this.editedItem.wlan_id;
+          var entype = '', passkey = this.editedItem.passphrase;
+          var vid = this.editedItem.vlan_id;
+          if(this.editedItem.encryption_mode=='Open'){
+            entype = 'None'
+            passkey = 'null'
+          }
+          else if(this.editedItem.encryption_mode=='WPA-PSK') entype = 'WPA-Personal'
+          else entype = 'WPA2-Personal'
+          if(this.editedItem.forward_mode=='Nat'){
+            vid = 'null'
+          }
+          var body = "'{,Device.WiFi.SSID."+v+".SSID:"+this.editedItem.ssid+",Device.WiFi.SSID."+v+".LowerLayers:1&2,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_IsHidden:false,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_FowardType:"+this.editedItem.forward_mode+",Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_VLANID:"+vid+",Device.WiFi.AccessPoint."+v+".Security.ModeEnabled:"+entype+",Device.WiFi.AccessPoint."+v+".Security.KeyPassphrase:"+passkey+",}'"
+          var abody = "'{,WiFiDog,"+this.editedItem.portal_ip+","+this.editedItem.portal_url+",js,"+this.editedItem.gateway_id+",true,true}'"
+          console.log(body);
+          console.log(abody);
+          var i;
+          http
+            .put("/updatessid/" + this.editedItem.id, this.editedItem)
+            .then(response => {
+              console.log(response.data);
+            })
+            .catch(e => {
+              console.log(e);
+            });
+          for (i in this.device) {
+            config
+                .post("/AddSSID/"+this.device[i].serial_number+", "+v, body)
+                .then(response => {
                 console.log(response.data);
-              })
-              .catch(e => {
+                })
+                .catch(e => {
                 console.log(e);
-              });
+                });
+            if(this.editedItem.auth){
+              config
+                  .post("/AddAuth/"+this.device[i].serial_number+", "+v, abody)
+                  .then(response => {
+                  //console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+            }
+          }
         } else {
           var v = this.editedItem.wlan_id;
           var entype = '', passkey = this.editedItem.passphrase;
@@ -941,14 +1020,16 @@ import config from "@/http-config";
                 .catch(e => {
                 console.log(e);
                 });
-            config
-                .post("/AddAuth/"+this.device[i].serial_number+", "+v, abody)
-                .then(response => {
-                //console.log(response.data);
-                })
-                .catch(e => {
-                console.log(e);
-                });
+            if(this.editedItem.auth){
+              config
+                  .post("/AddAuth/"+this.device[i].serial_number+", "+v, abody)
+                  .then(response => {
+                  //console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+            }
           }
 
         }
