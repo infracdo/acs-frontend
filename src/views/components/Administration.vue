@@ -5,6 +5,8 @@
     :search="search"
     sort-by="calories"
     class="elevation-1"
+    :loading="dataloaded<1"
+    loading-text="Loading... Please wait"
   >
     <template v-slot:top>
       <v-toolbar
@@ -23,6 +25,20 @@
           single-line
           hide-details
         ></v-text-field>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on: tooltip }">
+            <v-btn
+              color="primary"
+              dark
+              icon
+              v-on="{ ...tooltip }"
+              @click="initialize"
+            >
+              <v-icon>mdi-cached</v-icon>
+            </v-btn>
+          </template>
+          <span>Refresh</span>
+        </v-tooltip>
         <v-spacer></v-spacer>
         <v-dialog
           v-model="dialog"
@@ -158,12 +174,7 @@
       </v-icon>
     </template>
     <template v-slot:no-data>
-      <v-btn
-        color="primary"
-        @click="initialize"
-      >
-        Reset
-      </v-btn>
+      No data to display
     </template>
   </v-data-table>
 </template>
@@ -173,6 +184,7 @@ import http from "@/http-common";
 
   export default {
     data: () => ({
+      dataloaded: 0,
       search: '',
       valid: false,
       dialog: false,
@@ -231,8 +243,9 @@ import http from "@/http-common";
 
     methods: {
       initialize () {
+      this.dataloaded = 0 
       http
-        .get("/getgroup")
+        .get("/getgroup", {timeout: 5000})
         .then(response => {
           this.group = response.data; // JSON are parsed automatically.
           var i, x = new Array();
@@ -240,10 +253,12 @@ import http from "@/http-common";
             x[i] = response.data[i].parent+'/'+response.data[i].group_name;
           };
           this.group_list = x;
+          this.dataloaded = 1 
           console.log(response.data);
         })
         .catch(e => {
           console.log(e);
+          this.dataloaded = 1 
         });
       },
 

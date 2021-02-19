@@ -8,6 +8,8 @@
     :single-select="singleSelect"
     show-select
     class="elevation-1"
+    :loading="dataloaded<1"
+    loading-text="Loading... Please wait"
   >
     <template v-slot:top>
       <v-toolbar
@@ -49,6 +51,20 @@
           single-line
           hide-details
         ></v-text-field>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on: tooltip }">
+            <v-btn
+              color="primary"
+              dark
+              icon
+              v-on="{ ...tooltip }"
+              @click="initialize"
+            >
+              <v-icon>mdi-cached</v-icon>
+            </v-btn>
+          </template>
+          <span>Refresh</span>
+        </v-tooltip>
         <v-spacer></v-spacer>
 
         <v-dialog
@@ -253,11 +269,21 @@
       </v-toolbar>
     </template>
     <template v-slot:[`item.status`]="{ item }">
-      <v-chip
+      <v-icon
+        small
         :color="getColor(item.status)"
+        v-if="getColor(item.status)!='white'"
       >
+        mdi-checkbox-blank-circle
+      </v-icon>
+      <v-icon
+        small
+        v-if="getColor(item.status)=='white'"
+      >
+        mdi-checkbox-blank-circle-outline
+      </v-icon>
         {{ item.status }}
-      </v-chip>
+
     </template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon
@@ -275,12 +301,7 @@
       </v-icon>
     </template>
     <template v-slot:no-data>
-      <v-btn
-        color="primary"
-        @click="initialize"
-      >
-        Reset
-      </v-btn>
+      No data to display
     </template>
   </v-data-table>
 </template>
@@ -290,6 +311,7 @@ import http from "@/http-common";
 import config from "@/http-config";
   export default {
     data: () => ({
+      dataloaded: 0,
       vsave: true,
       valid: false,
       singleSelect: false,
@@ -380,7 +402,6 @@ import config from "@/http-config";
     created () {
       this.initialize()
       this.todo()
-      console.log ("hehe");
     },
     beforeDestroy () {
       clearInterval(this.timer)
@@ -392,25 +413,25 @@ import config from "@/http-config";
           }.bind(this), 15000);
       },
       initialize () {
-      console.log ("hehe");
+      this.dataloaded = 0 
       http
-        .get("/getdevice")
+        .get("/getdevice", {timeout: 5000})
         .then(response => {
           this.device = response.data; // JSON are parsed automatically.
           var i;
           for(i in response.data){
             this.serialList.push(response.data[i].serial_number)
-          }
-
-
-          
+          } 
+          this.dataloaded = 1 
+          console.log("device refresh")
         })
         .catch(e => {
           console.log(e);
+          this.dataloaded = 1
         });
       },
       getColor: function(status) {
-        if (status=='synching') return 'orange'
+        if (status=='syncing') return 'orange'
         else if (status=='online') return 'green'
         else return 'white'
       },
@@ -614,11 +635,13 @@ import config from "@/http-config";
               }
             }
             if(c){
+            console.log("index before: " + this.device.lastIndexOf());
             this.device.push(this.editedItem)
               http
                   .post("/adddevice", this.editedItem)
                   .then(response => {
-                  this.device[this.devicelastIndexOf()].id = response.data.id;
+                  //this.device[this.device.lastIndexOf()].id = response.data.id;
+                  console.log("index after: " + this.device.lastIndexOf());
                   console.log(this.editedItem);
                   })
                   .catch(e => {

@@ -5,6 +5,8 @@
     :headers="headers"
     :items="ssid"
     class="elevation-1"
+    :loading="isLoad"
+    loading-text="Loading... Please wait"
   >
     <template v-slot:top>
       <v-toolbar
@@ -26,6 +28,20 @@
         @input="ssidlist"
         ></v-autocomplete>
         </v-col>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on: tooltip }">
+            <v-btn
+              color="primary"
+              dark
+              icon
+              v-on="{ ...tooltip }"
+              @click="initialize"
+            >
+              <v-icon>mdi-cached</v-icon>
+            </v-btn>
+          </template>
+          <span>Refresh</span>
+        </v-tooltip>
         </v-row>
         <v-spacer></v-spacer>
         <v-dialog
@@ -98,7 +114,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>SSID</v-subheader>
+                    <v-subheader>SSID*</v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -118,7 +134,7 @@
                         md="1"
                         v-if="editedItem.forward_mode=='Bridge'"
                     >
-                    <v-subheader>VLAN ID</v-subheader>
+                    <v-subheader>VLAN ID*</v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -127,6 +143,7 @@
                     >
                         <v-text-field
                         v-model="editedItem.vlan_id"
+                        :rules="vlanRules"
                         required
                         outlined
                         dense
@@ -157,7 +174,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Password</v-subheader>
+                    <v-subheader>Password*</v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -246,7 +263,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Portal URL</v-subheader>
+                    <v-subheader>Portal URL*</v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -266,7 +283,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Portal IP</v-subheader>
+                    <v-subheader>Portal IP*</v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -316,6 +333,7 @@
                         ></v-checkbox>
                     </v-col>
                     </v-row>
+            <v-subheader>*indicates required field</v-subheader>
             </v-card-text>
           </v-form>
 
@@ -368,12 +386,7 @@
       </v-icon>
     </template>
     <template v-slot:no-data>
-      <v-btn
-        color="primary"
-        @click="initialize"
-      >
-        Reset
-      </v-btn>
+      No data to display
     </template>
   </v-data-table>
   </v-card>
@@ -537,12 +550,7 @@
       </v-icon>
     </template>
     <template v-slot:no-data>
-      <v-btn
-        color="primary"
-        @click="initialize"
-      >
-        Reset
-      </v-btn>
+      No data to display
     </template>
   </v-data-table>
             </v-expansion-panel-content>
@@ -559,6 +567,8 @@ import config from "@/http-config";
   export default {
     data: () => ({
       modelArray: [],
+      dataloaded: 0,
+      requestFailed: 0,
       valid: false,
       cvalid: false,
       cdialog: false,
@@ -600,6 +610,7 @@ import config from "@/http-config";
       command: [],
       editedIndex: -1,
       cIndex: -1,
+      allssidIndex: -1,
       editedItem: {
         id: 0,
         wlan_id: '',
@@ -640,6 +651,10 @@ import config from "@/http-config";
         command: '',
         parent: '',
       },
+      vlanRules: [
+        v => !!v || 'VLAN is required',
+        v =>!/\D/.test(v) || 'invalid Vlan',
+      ],
       ssidRules: [
         v => !!v || 'SSID is required',
       ],
@@ -656,6 +671,11 @@ import config from "@/http-config";
     computed: {
       formTitle () {
         return this.editedIndex === -1 ? 'New SSID' : 'Edit SSID'
+      },
+      isLoad () {
+        if(this.dataloaded>=4) return false;
+        else if(this.requestFailed>=4) return false;
+        else return true;
       },
     },
 
@@ -680,48 +700,81 @@ import config from "@/http-config";
 
     methods: {
       initialize () {
-      http
-        .get("/getdevice")
-        .then(response => {
-          this.all_device = response.data; // JSON are parsed automatically.
-          console.log(response.data);
-        })
-        .catch(e => {
-          console.log(e);
-        });
-      http
-        .get("/getcommand")
-        .then(response => {
-          this.all_command = response.data; // JSON are parsed automatically.
-          console.log(response.data);
-        })
-        .catch(e => {
-          console.log(e);
-        });
-      http
-        .get("/getssid")
-        .then(response => {
-          this.all_ssid = response.data; // JSON are parsed automatically.
-        })
-      http
-        .get("/getgroup")
-        .then(response => {
-          var i, x = new Array();
-          for (i in response.data) {
-            x[i] = response.data[i].parent+'/'+response.data[i].group_name;
-          };
-          this.group_list = x;
-          this.editedItem.parent = x[0];
-          console.log("group2: " + x[0]);
-          this.ssidlist()
-          console.log(response.data);
-        })
-        .catch(e => {
-          console.log(e);
-        });
+        this.dataloaded = 0
+        this.requestFailed = 0
+        this.updatessid()
+        this.updatecommand()
+        this.updatedevice()
+        this.updategroup()
         for (var i = 1; i <= 32; i++) {
             this.wlanid.push(i);
         }
+        console.log("initialized dataloaded: " + this.dataloaded)
+        console.log("initialized request: " + this.requestFailed)
+      },
+
+      updatessid () {
+        http
+          .get("/getssid", {timeout: 5000})
+          .then(response => {
+            this.all_ssid = response.data; // JSON are parsed automatically.
+            console.log("group2: loaded" );
+            console.log(response.data);
+            this.dataloaded++;
+            if(this.dataloaded>=4) this.ssidlist();
+          })
+          .catch(e => {
+            this.requestFailed++;
+          });
+      },
+      updatedevice () {
+        http
+          .get("/getdevice", {timeout: 5000})
+          .then(response => {
+            this.all_device = response.data; // JSON are parsed automatically.
+            console.log(response.data);
+            this.dataloaded++;
+            if(this.dataloaded>=4) this.ssidlist()
+          })
+          .catch(e => {
+            console.log(e);
+            this.requestFailed++;
+          });
+      },
+
+      updatecommand () {
+        http
+          .get("/getcommand", {timeout: 5000})
+          .then(response => {
+            this.all_command = response.data; // JSON are parsed automatically.
+            console.log(response.data);
+            this.dataloaded++;
+            if(this.dataloaded>=4) this.ssidlist()
+          })
+          .catch(e => {
+            console.log(e);
+            this.requestFailed++;
+          });
+      },
+
+      updategroup () {
+        http
+          .get("/getgroup", {timeout: 5000})
+          .then(response => {
+            var i, x = new Array();
+            for (i in response.data) {
+              x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+            };
+            this.group_list = x;
+            this.editedItem.parent = x[0];
+            console.log(response.data);
+            this.dataloaded++;
+            if(this.dataloaded>=4) this.ssidlist()
+          })
+          .catch(e => {
+            console.log(e);
+            this.requestFailed++;
+          });
       },
 
       wlanid_array () {
@@ -749,12 +802,16 @@ import config from "@/http-config";
 
       deleteItem (item) {
         this.editedIndex = this.ssid.indexOf(item)
+        this.allssidIndex = this.all_ssid.indexOf(item)
+        this.parent_watcher = this.editedItem.parent
         this.editedItem = Object.assign({}, item)
+        this.editedItem.parent = this.parent_watcher
         this.dialogDelete = true
       },
 
       deleteItemConfirm () {
         this.ssid.splice(this.editedIndex, 1)
+        this.all_ssid.splice(this.allssidIndex, 1)
         this.closeDelete()
         var i;
         http
@@ -830,8 +887,10 @@ import config from "@/http-config";
           for (i in this.all_ssid) {
             if(this.editedItem.parent.startsWith(this.all_ssid[i].parent)){
               x[i] = this.all_ssid[i];
-              this.wlanid.splice(this.wlanid.indexOf(this.all_ssid[i].wlan_id), 1)
               this.ssidList.push(this.all_ssid[i].ssid)
+            }
+            if(this.editedItem.parent.startsWith(this.all_ssid[i].parent)||this.editedItem.parent.includes(this.all_ssid[i].parent)){
+              this.wlanid.splice(this.wlanid.indexOf(this.all_ssid[i].wlan_id), 1)
             }
           };
           for (i in this.all_device) {
@@ -861,7 +920,11 @@ import config from "@/http-config";
       csave () {
         if (this.cIndex > -1) {
           this.citems.parent = this.editedItem.parent
+          try{
           this.citems.model = this.modelArray.toString()
+          }catch(err){
+            console.log("try again")
+          }
           Object.assign(this.command[this.cIndex], this.citems)
           var input_command= this.citems.command.split(/\n/g);
           var i, x = new Array(), body = '{';
@@ -885,7 +948,7 @@ import config from "@/http-config";
           for (i in this.device) {
             if(this.modelArray.indexOf(this.device[i].model)>0 || this.modelArray.indexOf("ALL")){
               config
-                  .post("/Command/"+this.device[i].serial_number, body)
+                  .get("/ExecuteGroupCommand/"+this.device[i].serial_number+","+this.citems.id)
                   .then(response => {
                   console.log(response.data);
                   })
@@ -915,22 +978,22 @@ import config from "@/http-config";
                 .post("/addcommand", this.citems)
                 .then(response => {
                 console.log(response.data);
+                for (i in this.device) {
+                  if(this.modelArray.indexOf(this.device[i].model)>0 | this.modelArray.indexOf("ALL")){
+                    config
+                        .post("/Command/"+this.device[i].serial_number, body)
+                        .then(response => {
+                        console.log(response.data);
+                        })
+                        .catch(e => {
+                        console.log(e);
+                        });
+                  }
+                }
                 })
                 .catch(e => {
                 console.log(e);
                 });
-          for (i in this.device) {
-            if(this.modelArray.indexOf(this.device[i].model)>0 | this.modelArray.indexOf("ALL")){
-              config
-                  .post("/Command/"+this.device[i].serial_number, body)
-                  .then(response => {
-                  console.log(response.data);
-                  })
-                  .catch(e => {
-                  console.log(e);
-                  });
-            }
-          }
 
         }
         this.cclose()
@@ -985,52 +1048,29 @@ import config from "@/http-config";
           }
         } else {
           var v = this.editedItem.wlan_id;
-          var entype = '', passkey = this.editedItem.passphrase;
-          var vid = this.editedItem.vlan_id;
-          if(this.editedItem.encryption_mode=='Open'){
-            entype = 'None'
-            passkey = 'null'
-          }
-          else if(this.editedItem.encryption_mode=='WPA-PSK') entype = 'WPA-Personal'
-          else entype = 'WPA2-Personal'
-          if(this.editedItem.forward_mode=='Nat'){
-            vid = 'null'
-          }
-          var body = "'{,Device.WiFi.SSID."+v+".SSID:"+this.editedItem.ssid+",Device.WiFi.SSID."+v+".LowerLayers:1&2,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_IsHidden:false,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_FowardType:"+this.editedItem.forward_mode+",Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_VLANID:"+vid+",Device.WiFi.AccessPoint."+v+".Security.ModeEnabled:"+entype+",Device.WiFi.AccessPoint."+v+".Security.KeyPassphrase:"+passkey+",}'"
-          var abody = "'{,WiFiDog,"+this.editedItem.portal_ip+","+this.editedItem.portal_url+",js,"+this.editedItem.gateway_id+",true,true}'"
-          this.ssid.push(this.editedItem)
-          this.all_ssid.push(this.editedItem)
-          console.log(body);
-          console.log(abody);
+          this.wlanid.splice(this.wlanid.indexOf(v), 1)
+          this.ssid.push(this.editedItem);
+          this.all_ssid.push(this.editedItem);
           var i;
             http
                 .post("/addssid", this.editedItem)
                 .then(response => {
-                //console.log(response.data);
+                  this.ssid[this.ssid.lastIndexOf()].id = response.data.id;
+                  this.all_ssid[this.all_ssid.lastIndexOf()].id = response.data.id;
+                  for (i in this.device) {
+                    config
+                        .post("/AddSSID/"+this.device[i].serial_number+", "+response.data.id)
+                        .then(response => {
+                        console.log(response.data);
+                        })
+                        .catch(e => {
+                        console.log(e);
+                        });
+                  }
                 })
                 .catch(e => {
                 console.log(e);
                 });
-          for (i in this.device) {
-            config
-                .post("/AddSSID/"+this.device[i].serial_number+", "+v, body)
-                .then(response => {
-                console.log(response.data);
-                })
-                .catch(e => {
-                console.log(e);
-                });
-            if(this.editedItem.auth){
-              config
-                  .post("/AddAuth/"+this.device[i].serial_number+", "+v, abody)
-                  .then(response => {
-                  //console.log(response.data);
-                  })
-                  .catch(e => {
-                  console.log(e);
-                  });
-            }
-          }
 
         }
         this.close()
