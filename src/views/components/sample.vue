@@ -635,13 +635,11 @@ import config from "@/http-config";
               }
             }
             if(c){
-            console.log("index before: " + this.device.lastIndexOf());
             this.device.push(this.editedItem)
               http
                   .post("/adddevice", this.editedItem)
                   .then(response => {
-                  //this.device[this.device.lastIndexOf()].id = response.data.id;
-                  console.log("index after: " + this.device.lastIndexOf());
+                  this.device[this.device.length-1].id = response.data.id;
                   console.log(this.editedItem);
                   })
                   .catch(e => {
