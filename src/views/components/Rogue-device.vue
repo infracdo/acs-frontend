@@ -1,0 +1,703 @@
+<template>
+  <v-data-table
+    v-model="selected"
+    :headers="headers"
+    :items="device"
+    :search="search"
+    item-key="serial_number"
+    :single-select="singleSelect"
+    show-select
+    class="elevation-1"
+    :loading="dataloaded<1"
+    loading-text="Loading... Please wait"
+  >
+    <template v-slot:top>
+      <v-toolbar
+        flat
+      >
+      <v-menu offset-y v-if="selected.length>0">
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            color="primary"
+            dark
+            v-bind="attrs"
+            v-on="on"
+            icon
+          >
+            <v-icon dark>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item
+            v-for="(item, index) in items"
+            :key="index"
+            @click="actions(index)"
+          >
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
+        <v-toolbar-title>Rogue Devices</v-toolbar-title>
+        <v-divider
+          class="mx-4"
+          inset
+          vertical
+        ></v-divider>
+        <v-text-field
+          v-model="search"
+          append-icon="mdi-magnify"
+          label="Search"
+          single-line
+          hide-details
+        ></v-text-field>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on: tooltip }">
+            <v-btn
+              color="primary"
+              dark
+              icon
+              v-on="{ ...tooltip }"
+              @click="initialize"
+            >
+              <v-icon>mdi-cached</v-icon>
+            </v-btn>
+          </template>
+          <span>Refresh</span>
+        </v-tooltip>
+        <v-spacer></v-spacer>
+
+        <v-dialog
+          v-model="dialog"
+          max-width="1000px"
+        >
+          <v-card>
+            <v-card-title>
+              <span class="headline">{{ formTitle }}</span>
+            </v-card-title>
+          <v-form
+            ref="form"
+            v-model="valid"
+            lazy-validation
+          >
+            <v-card-text>
+                    <v-row no-gutters>
+                    <v-col
+                        cols="1"
+                        md="1"
+                    >
+                    <v-subheader><div v-html="'Serial Number <strong>*</strong>'"></div></v-subheader>
+                    </v-col>
+                    <v-col
+                        cols="4"
+                        md="4"
+                    >
+                        <v-text-field
+                        v-model="editedItem.serial_number"
+                        :disabled="editedIndex!=-1"
+                        :rules="serialRules"
+                        required
+                        outlined
+                        dense
+                        @focus="alert=false"
+                        ></v-text-field>
+                    </v-col>
+                    <v-spacer></v-spacer>
+                    <v-col
+                        cols="1"
+                        md="1"
+                    >
+                    <v-subheader><div v-html="'Parent Group <strong>*</strong>'"></div></v-subheader>
+                    </v-col>
+                    <v-col
+                        cols="4"
+                        md="4"
+                    >
+                        <v-select
+                        :items="group_list"
+                        v-model="editedItem.parent"
+                        item-value="editedItem.parent[0]"
+                        :rules="[v => !!v || 'Group is required']"
+                        outlined
+                        dense
+                        ></v-select>
+                    </v-col>
+                    </v-row>
+                    <v-row no-gutters>
+                    <v-col
+                        cols="1"
+                        md="1"
+                    >
+                    <v-subheader><div v-html="'Device Alias <strong>*</strong>'"></div></v-subheader>
+                    </v-col>
+                    <v-col
+                        cols="4"
+                        md="4"
+                    >
+                        <v-text-field
+                        v-model="editedItem.device_name"
+                        :rules="[v => !!v || 'Name is required']"
+                        required
+                        outlined
+                        dense
+                        ></v-text-field>
+                    </v-col>
+                    <v-spacer></v-spacer>
+                    <v-col
+                        cols="1"
+                        md="1"
+                    >
+                    <v-subheader><div v-html="'Device Type <strong>*</strong>'"></div></v-subheader>
+                    </v-col>
+                    <v-col
+                        cols="4"
+                        md="4"
+                    >
+                        <v-select
+                        :items="['Access Point', 'Switch', 'Router']"
+                        v-model="editedItem.device_type"
+                        item-value="Access Point"
+                        :rules="[v => !!v || 'Device type is required']"
+                        outlined
+                        dense
+                        ></v-select>
+                    </v-col>
+
+                    </v-row>
+            <v-subheader><div v-html="'<strong>* </strong> indicates required field'"></div></v-subheader>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="blue darken-1"
+                text
+                @click="close"
+              >
+                Cancel
+              </v-btn>
+              <v-btn
+                :disabled="!valid || !!!editedItem.device_name || !!!editedItem.parent || !!!editedItem.serial_number"
+                color="blue darken-1"
+                text
+                @click="save"
+              >
+                Save
+              </v-btn>
+            </v-card-actions>
+            </v-form>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="dialogMove" max-width="600px">
+          <v-card>
+            <v-card-title> Select Group </v-card-title>
+                <v-row no-gutters>
+                    <v-col
+                        cols="3"
+                        md="3"
+                    >
+                    <v-subheader>Parent Group</v-subheader>
+                    </v-col>
+                    <v-col
+                        cols="6"
+                        md="6"
+                    >
+                        <v-select
+                        :items="group_list"
+                        v-model="editedItem.parent"
+                        item-value="editedItem.parent[0]"
+                        :rules="[v => !!v || 'Group is required']"
+                        outlined
+                        dense
+                        ></v-select>
+                    </v-col>
+                </v-row>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="closeMove">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="moveConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="dialogDelete" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="closeDelete">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="deleteItemConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="dialogcli" max-width="600px">
+          <v-layout column class="fill-height">
+          <v-card min-height="500" max-width="600" max-height="500" dark>
+            <v-card-title class="headline">{{cliheader}}</v-card-title>
+            <v-card-text >
+                        <v-textarea
+                        rows="17"
+                        v-model="code"
+                        readonly
+                        densed
+                        outlined
+                        no-resize
+                        ></v-textarea>
+            </v-card-text>
+          </v-card>
+          <v-card>
+                    <v-row no-gutters class="mx-4">
+                    <v-col
+                        cols="8"
+                        md="8"
+                    >
+                        <v-text-field
+                        v-model="getcode"
+                        required
+                        outlined
+                        dense
+                        class="mt-2"
+                        ></v-text-field>
+                    </v-col>
+                    <v-col
+                        cols="2"
+                        md="2"
+                    >
+                    <v-btn color="blue darken-1" text @click="sendcode(getcode)" class="mt-2">send code</v-btn>
+                    </v-col>
+                    <v-col
+                        cols="1"
+                        md="1"
+                    >
+                    <v-btn color="blue darken-1" text @click="code=''" class="mt-2">clear</v-btn>
+                    </v-col>
+                    </v-row>
+          </v-card>
+          </v-layout>
+        </v-dialog>
+      </v-toolbar>
+    </template>
+    <template v-slot:[`item.status`]="{ item }">
+      <v-icon
+        small
+        :color="getColor(item.status)"
+        v-if="getColor(item.status)!='white'"
+      >
+        mdi-checkbox-blank-circle
+      </v-icon>
+      <v-icon
+        small
+        v-if="getColor(item.status)=='white'"
+      >
+        mdi-checkbox-blank-circle-outline
+      </v-icon>
+        {{ item.status }}
+
+    </template>
+    <template v-slot:[`item.actions`]="{ item }">
+      <v-icon
+        small
+        class="mr-2"
+        @click="editItem(item)"
+      >
+        mdi-pencil
+      </v-icon>
+      <v-icon
+        small
+        @click="opencli(item)"
+      >
+        mdi-console
+      </v-icon>
+    </template>
+    <template v-slot:no-data>
+      No data to display
+    </template>
+  </v-data-table>
+</template>
+
+<script>
+import http from "@/http-common";
+import config from "@/http-config";
+  export default {
+    name: 'rogue',
+    data: () => ({
+      dataloaded: 0,
+      vsave: true,
+      valid: false,
+      singleSelect: false,
+      alert: false,
+      parent_watcher: '',
+      serialList: [],
+      selected: [],
+      search: '',
+      code: '',
+      cliheader: '',
+      cliserial: '',
+      apname: 'acs#',
+      mode_url: 'exec',
+      mode_prompt: '',
+      mode_idtx: '0',
+      mode_idtx1: '0',
+      mode_idtx2: '0',
+      mode_stridx: '',
+      getcode: '',
+      dialog: false,
+      dialogDelete: false,
+      dialogcli: false,
+      dialogMove: false,
+      headers: [
+        { text: 'Status', value: 'status' },
+        {
+          text: 'Device_name',
+          align: 'start',
+          sortable: false,
+          value: 'device_name',
+        },
+        { text: 'Serial number', value: 'serial_number' },
+        { text: 'Group', value: 'parent' },
+        { text: 'Mac address', value: 'mac_address' },
+        { text: 'Offline time', value: 'date_offline' },
+        { text: 'Modified time', value: 'date_modified' },
+        { text: 'Action', value: 'actions', sortable: false },
+      ],
+    serialRules: [
+      v => !!v || 'Serial is required',
+      v => (v && v.length >= 10) || 'Invalid Serial',
+      v => (v && v.length <= 14) || 'Invalid Serial',
+    ],
+      group_list: [],
+      serial_list: [],
+      device: [],
+      items: [
+        { title: 'restart' },
+        { title: 'move' },
+        { title: 'delete' },
+      ],
+      editedIndex: -1,
+      editedItem: {
+        id: '',
+        status: 'offline',
+        device_name: '',
+        activated: '',
+        date_created: '',
+        date_modified: '',
+        date_offline: '',
+        group_name: '',
+        location: '',
+        mac_address: '',
+        parent: '/apollo',
+        device_type: 'Acess Point',
+        serial_number: '',
+      },
+      defaultItem: {
+        id: '',
+        status: 'offline',
+        device_name: '',
+        activated: '',
+        date_created: '',
+        date_modified: '',
+        date_offline: '',
+        group_name: '',
+        location: '',
+        mac_address: '',
+        parent: '',
+        device_type: 'Acess Point',
+        serial_number: '',
+      },
+    }),
+
+    computed: {
+      formTitle () {
+        return this.editedIndex === -1 ? 'New Device' : 'Edit Device'
+      },
+    },
+
+    watch: {
+      dialog (val) {
+        val || this.close()
+      },
+      dialogDelete (val) {
+        val || this.closeDelete()
+      },
+    },
+
+    created () {
+      this.initialize()
+      this.todo()
+    },
+    beforeDestroy () {
+      clearInterval(this.timer)
+    },
+    methods: {
+      todo: function(){           
+          this.timer = setInterval(function(){
+            if(this.selected.length<=0) this.initialize();
+          }.bind(this), 15000);
+      },
+      initialize () {
+        var host = "hehe";
+        console.log(host);
+      this.dataloaded = 0 
+      http
+        .get("/getdevice", {timeout: 5000})
+        .then(response => {
+          this.device = []
+          var i;
+          for(i in response.data){
+            this.serialList.push(response.data[i].serial_number)
+            if(response.data[i].parent == "unassigned") this.device.push(response.data[i])
+          } 
+          console.log(response.data)
+          this.dataloaded = 1 
+          console.log("device refresh")
+        })
+        .catch(e => {
+          console.log(e);
+          this.dataloaded = 1
+        });
+        http
+          .get("/getgroup")
+          .then(response => {
+            var i, x = new Array();
+            for (i in response.data) {
+              x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+            };
+            this.group_list = x;
+            if(!!!this.group_list) this.editedItem.parent = this.group_list[0];
+            console.log(response.data);
+          })
+          .catch(e => {
+            console.log(e);
+          });
+      },
+      getColor: function(status) {
+        if (status=='syncing') return 'orange'
+        else if (status=='online') return 'green'
+        else return 'white'
+      },
+
+      editItem (item) {
+        this.dialog = true
+        this.parent_watcher = item.parent
+        this.editedIndex = this.device.indexOf(item)
+        this.editedItem = Object.assign({}, item)
+      },
+
+      initGroup () {
+        http
+          .get("/getgroup")
+          .then(response => {
+            var i, x = new Array();
+            for (i in response.data) {
+              x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+            };
+            this.group_list = x;
+            if(!!!this.group_list) this.editedItem.parent = this.group_list[0];
+            console.log(response.data);
+          })
+          .catch(e => {
+            console.log(e);
+          });
+          this.serialRules.push(v => this.serialList.indexOf(v) < 0|| 'Serial already exist');
+      },
+
+      closeMove () {
+        this.dialogMove = false;
+      },
+
+
+      moveConfirm () {
+        var i, x = new Array();
+        for (i in this.selected) {
+          console.log(this.device.indexOf(this.selected[i]))
+          if(this.device.indexOf(this.selected[i])!=-1) this.device[this.device.indexOf(this.selected[i])].parent = this.editedItem.parent
+          this.editedItem = Object.assign({}, this.device[this.device.indexOf(this.selected[i])])
+              http
+                .put("/updatedevice/" + this.editedItem.id, this.editedItem)
+                .then(response => {
+                  console.log(response.data);
+                })
+                .catch(e => {
+                  console.log(e);
+                });
+                this.closeMove()
+              config
+                  .get("/MoveDeviceGroup/"+this.selected[i].serial_number)
+                  .then(response => {
+                  console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+        }
+        this.selected = []
+      },
+
+      deleteItem (item) {
+        this.editedIndex = this.device.indexOf(item)
+        this.editedItem = Object.assign({}, item)
+        this.dialogDelete = true
+      },
+
+      deleteItemConfirm () {
+        this.device.splice(this.editedIndex, 1)
+        this.closeDelete()
+        http
+            .delete("/deletedevice/" + this.editedItem.id)
+            .then(response => {
+            console.log(response.data);
+            })
+            .catch(e => {
+            console.log(e);
+            });
+      },
+      actions (index) {
+        if(index==2){
+          var i, x = new Array();
+          for (i in this.selected) {
+        console.log(this.selected[i].device_name);
+        this.device.splice(this.device.indexOf(this.selected[i]), 1)
+        http
+            .delete("/deletedevice/" + this.selected[i].id)
+            .then(response => {
+            console.log(response.data);
+            })
+            .catch(e => {
+            console.log(e);
+            });
+          };
+          this.selected = [];
+        }
+        else if(index==0){
+          var i, x = new Array();
+          for (i in this.selected) {
+        config
+            .get("/Reboot/"+this.selected[i].serial_number)
+            .then(response => {
+            console.log(response.data);
+            })
+            .catch(e => {
+            console.log(e);
+            });
+            console.log(this.selected[i].id);
+          };
+          this.selected = [];
+
+        }
+        else if(index==1){
+          this.dialogMove = true
+        }
+      },
+
+      opencli (item) {
+        this.dialogcli = true;
+        this.code = '';
+        this.apname = 'acs#'
+        this.mode_url = 'exec';
+        this.mode_prompt = '';
+        this.mode_idtx = '0';
+        this.mode_idtx1 = '0';
+        this.mode_idtx2 = '0';
+        this.mode_stridx = '';
+        this.cliserial = item.serial_number;
+        if(item.device_name==null) this.cliheader= item.serial_number;
+        else this.cliheader= item.device_name;
+      },
+      sendcode (text) {
+      this.getcode = '';
+      var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+'}';
+      console.log(body);
+      this.code += text + "\n";
+      config
+        .post("/WebCli/"+this.cliserial+", " + text, body)
+        .then(response => {
+          this.code += response.data.content; // JSON are parsed automatically.
+          this.apname=response.data.mode_tip
+          this.mode_url=response.data.mode_url
+          this.mode_idtx=response.data.mode_idtx
+          this.mode_idtx1=response.data.mode_idtx1
+          this.mode_idtx2=response.data.mode_idtx2
+          this.mode_stridx=response.data.mode_stridx
+          this.mode_prompt=response.data.mode_prompt
+          this.code += this.apname;
+          console.log(response.data);
+        })
+        .catch(e => {
+          console.log(e);
+        });
+         console.log(this.cliserial);
+      },
+      close () {
+        this.serialRules.splice(3, 1)
+        this.$refs.form.resetValidation()
+        this.valid = false;
+        this.dialog = false
+        this.$nextTick(() => {
+          this.editedItem = Object.assign({}, this.defaultItem)
+          this.editedItem.parent = this.group_list[0]
+          this.editedIndex = -1
+        })
+      },
+
+      closeDelete () {
+        this.dialogDelete = false
+        this.$nextTick(() => {
+          this.editedItem = Object.assign({}, this.defaultItem)
+          this.editedIndex = -1
+        })
+      },
+
+      save () {
+        if(this.valid){
+          this.$refs.form.resetValidation()
+          if (this.editedIndex > -1) {
+            Object.assign(this.device[this.editedIndex], this.editedItem)
+            console.log(this.editedItem)
+              http
+                .put("/updatedevice/" + this.editedItem.id, this.editedItem)
+                .then(response => {
+                  console.log(response.data);
+                })
+                .catch(e => {
+                  console.log(e);
+                });
+                this.close()
+            if(this.parent_watcher!=this.editedItem.parent){
+              config
+                  .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
+                  .then(response => {
+                  console.log(response.data);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+            }
+
+          } else {
+            var i, x = new Array(), c=true;
+            
+            for (i in this.device) {
+              if(this.device[i].serial_number==this.editedItem.serial_number){
+                c=false;
+              }
+            }
+            if(c){
+            this.device.push(this.editedItem)
+              http
+                  .post("/adddevice", this.editedItem)
+                  .then(response => {
+                  this.device[this.device.length-1].id = response.data.id;
+                  console.log(this.editedItem);
+                  })
+                  .catch(e => {
+                  console.log(e);
+                  });
+                this.close()
+            }else this.alert=true;
+          }
+        }
+      },
+    },
+  }
+</script>
