@@ -1,5 +1,4 @@
 <template>
-  <div>
   <v-data-table
     v-model="selected"
     :headers="headers"
@@ -327,18 +326,13 @@
       No data to display
     </template>
   </v-data-table>
-  <rogue-ap></rogue-ap>
-  </div>
 </template>
 
 <script>
 import http from "@/http-common";
 import config from "@/http-config";
-import rogue from './sample2.vue'
   export default {
-    components: {
-      'rogue-ap': rogue
-    },
+    name: 'rogue',
     data: () => ({
       dataloaded: 0,
       vsave: true,
@@ -454,20 +448,21 @@ import rogue from './sample2.vue'
           }.bind(this), 15000);
       },
       initialize () {
+        var host = "hehe";
+        console.log(host);
       this.dataloaded = 0 
       http
         .get("/getdevice", {timeout: 5000})
         .then(response => {
-          //this.device = response.data; // JSON are parsed automatically.
           this.device = []
           var i;
           for(i in response.data){
             this.serialList.push(response.data[i].serial_number)
-            if(response.data[i].parent != "unassigned") this.device.push(response.data[i])
+            if(response.data[i].parent == "unassigned") this.device.push(response.data[i])
           } 
+          console.log(response.data)
           this.dataloaded = 1 
           console.log("device refresh")
-          console.log(this.selected)
         })
         .catch(e => {
           console.log(e);
