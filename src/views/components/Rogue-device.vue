@@ -436,8 +436,6 @@ import config from "@/http-config";
           }.bind(this), 15000);
       },
       initialize () {
-        var host = "hehe";
-        console.log(host);
       this.dataloaded = 0 
       http
         .get("/getdevice", {timeout: 5000})
@@ -450,6 +448,7 @@ import config from "@/http-config";
           } 
           console.log(response.data)
           this.dataloaded = 1 
+          //git test
           console.log("device refresh")
         })
         .catch(e => {
