@@ -114,7 +114,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>SSID*</v-subheader>
+                    <v-subheader><div v-html="'SSID <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -134,7 +134,7 @@
                         md="1"
                         v-if="editedItem.forward_mode=='Bridge'"
                     >
-                    <v-subheader>VLAN ID*</v-subheader>
+                    <v-subheader><div v-html="'VLAN ID <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -174,7 +174,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Password*</v-subheader>
+                    <v-subheader><div v-html="'Password <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -263,7 +263,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Portal URL*</v-subheader>
+                    <v-subheader><div v-html="'Portal URL <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -283,7 +283,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Portal IP*</v-subheader>
+                    <v-subheader><div v-html="'Portal IP <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -333,7 +333,7 @@
                         ></v-checkbox>
                     </v-col>
                     </v-row>
-            <v-subheader>*indicates required field</v-subheader>
+            <v-subheader><div v-html="'<strong>* </strong> indicates required field'"></div></v-subheader>
             </v-card-text>
           </v-form>
 
@@ -440,7 +440,7 @@
                         cols="4"
                         md="4"
                     >
-                    <v-subheader>Model</v-subheader>
+                    <v-subheader><div v-html="'Model <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="8"
@@ -462,7 +462,7 @@
                         cols="4"
                         md="4"
                     >
-                    <v-subheader>Description</v-subheader>
+                    <v-subheader><div v-html="'Description <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="8"
@@ -472,7 +472,7 @@
                         v-model="citems.description"
                         required
                         outlined
-                        :rules="[v => !!v || 'description is required']"
+                        :rules="[v => !!v || 'Description is required']"
                         dense
                         ></v-text-field>
                     </v-col>
@@ -482,7 +482,7 @@
                         cols="4"
                         md="4"
                     >
-                    <v-subheader>Command</v-subheader>
+                    <v-subheader><div v-html="'Command <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     </v-row>
                     <v-row no-gutters class="mx-4">
@@ -494,11 +494,12 @@
                         v-model="citems.command"
                         rows="9"
                         outlined
-                        :rules="[v => !!v || 'command cannot be empty']"
+                        :rules="[v => !!v || 'Command cannot be empty']"
                         densed
                         ></v-textarea>
                     </v-col>
                     </v-row>
+            <v-subheader><div v-html="'<strong>* </strong> indicates required field'"></div></v-subheader>
             </v-card-text>
           </v-form>
             <v-card-actions>
@@ -583,7 +584,7 @@ import config from "@/http-config";
           sortable: false,
           value: 'ssid',
         },
-        { text: 'wlan ID', value: 'wlan_id' },
+        { text: 'WLAN ID', value: 'wlan_id' },
         { text: 'Encryption Mode', value: 'encryption_mode' },
         { text: 'Portal url', value: 'portal_url' },
         { text: 'Gateway ID', value: 'gateway_id' },
@@ -653,18 +654,18 @@ import config from "@/http-config";
       },
       vlanRules: [
         v => !!v || 'VLAN is required',
-        v =>!/\D/.test(v) || 'invalid Vlan',
+        v =>!/\D/.test(v) || 'Invalid Vlan',
       ],
       ssidRules: [
         v => !!v || 'SSID is required',
       ],
       portalRules: [
-        v => !!v || 'url is required',
-        v => /.+\..+/.test(v) || 'url must must be valid',
+        v => !!v || 'URL is required',
+        v => /.+\..+/.test(v) || 'URL must must be valid',
       ],
       ipRules: [
         v => !!v || 'IP is required',
-        v => /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(v) || 'ip must must be valid',
+        v => /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(v) || 'IP must must be valid',
       ],
     }),
 
@@ -946,9 +947,11 @@ import config from "@/http-config";
                 console.log("hehe");
               });
           for (i in this.device) {
-            if(this.modelArray.indexOf(this.device[i].model)>0 || this.modelArray.indexOf("ALL")){
+            console.log("if executing")
+            if(this.modelArray.indexOf(this.device[i].model)>0 || this.modelArray.indexOf("ALL")>0){
+              console.log("executing")
               config
-                  .get("/ExecuteGroupCommand/"+this.device[i].serial_number+","+this.citems.id)
+                  .get("/ExecuteGroupCommand/"+this.device[i].serial_number+", "+this.citems.id)
                   .then(response => {
                   console.log(response.data);
                   })
@@ -972,16 +975,20 @@ import config from "@/http-config";
           
           
           console.log("command: " + body);
-          //var body = "'{,Device.WiFi.SSID."+"5"+".SSID:"+"notNewSSID"+",Device.WiFi.SSID."+"5"+".LowerLayers:1&2,Device.WiFi.SSID.5.X_WWW-RUIJIE-COM-CN_IsHidden:false,Device.WiFi.SSID."+"5"+".X_WWW-RUIJIE-COM-CN_FowardType:Bridge,Device.WiFi.SSID.5.X_WWW-RUIJIE-COM-CN_VLANID:1,Device.WiFi.AccessPoint.5.Security.ModeEnabled:WPA2-Personal,Device.WiFi.AccessPoint.5.Security.KeyPassphrase:StudyInScarlet123,}'"
           this.command.push(this.citems)
+          this.all_command.push(this.citems)
             http
                 .post("/addcommand", this.citems)
                 .then(response => {
+                this.command[this.command.length-1].id = response.data.id;    
+                this.all_command[this.all_command.length-1].id = response.data.id;   
                 console.log(response.data);
                 for (i in this.device) {
-                  if(this.modelArray.indexOf(this.device[i].model)>0 | this.modelArray.indexOf("ALL")){
+                  console.log("if executing:" + response.data.id)
+                  if(this.modelArray.indexOf(this.device[i].model)>0 || this.modelArray.indexOf("ALL")){
+                    console.log("executing")
                     config
-                        .post("/Command/"+this.device[i].serial_number, body)
+                        .post("/ExecuteGroupCommand/"+this.device[i].serial_number+", "+response.data.id)
                         .then(response => {
                         console.log(response.data);
                         })
@@ -1028,23 +1035,13 @@ import config from "@/http-config";
             });
           for (i in this.device) {
             config
-                .post("/AddSSID/"+this.device[i].serial_number+", "+v, body)
+                .post("/AddSSID/"+this.device[i].serial_number+", "+this.editedItem.id)
                 .then(response => {
                 console.log(response.data);
                 })
                 .catch(e => {
                 console.log(e);
                 });
-            if(this.editedItem.auth){
-              config
-                  .post("/AddAuth/"+this.device[i].serial_number+", "+v, abody)
-                  .then(response => {
-                  //console.log(response.data);
-                  })
-                  .catch(e => {
-                  console.log(e);
-                  });
-            }
           }
         } else {
           var v = this.editedItem.wlan_id;
@@ -1055,8 +1052,8 @@ import config from "@/http-config";
             http
                 .post("/addssid", this.editedItem)
                 .then(response => {
-                  this.ssid[this.ssid.lastIndexOf()].id = response.data.id;
-                  this.all_ssid[this.all_ssid.lastIndexOf()].id = response.data.id;
+                  this.ssid[this.ssid.length-1].id = response.data.id;
+                  this.all_ssid[this.all_ssid.length-1].id = response.data.id;
                   for (i in this.device) {
                     config
                         .post("/AddSSID/"+this.device[i].serial_number+", "+response.data.id)
