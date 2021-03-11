@@ -120,7 +120,7 @@ export const constantRoutes = [
     children: [
       {
         path: '/Configuration',
-        component: () => import('@/views/components/I18n.vue'),
+        component: () => import('@/views/components/Configuration.vue'),
         name: 'Configuration',
         meta: { title: 'Configuration', icon: 'mdi-access-point' },
       },
@@ -132,7 +132,7 @@ export const constantRoutes = [
     children: [
       {
         path: '/Groups',
-        component: () => import('@/views/components/Administration.vue'),
+        component: () => import('@/views/components/Groups.vue'),
         name: 'Groups',
         meta: { title: 'Groups', icon: 'mdi-account-group' },
       },
@@ -144,7 +144,7 @@ export const constantRoutes = [
     children: [
       {
         path: '/Devices',
-        component: () => import('@/views/components/sample.vue'),
+        component: () => import('@/views/components/Devices.vue'),
         name: 'Devices',
         meta: { title: 'Devices', icon: 'mdi-server-network' },
       },
