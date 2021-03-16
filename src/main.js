@@ -23,8 +23,8 @@ Vue.use(VueKeyCloak, {
   },
   config: {
     realm: 'acs-test-realm',
-    url: 'https://keycloak-test.apollo.com.ph/auth',
-    clientId: 'acs-user',
+    url: 'https://auth.apollotech.co/auth',
+    clientId: 'Apollo',
   },
   onReady: () => {
     new Vue({
