@@ -1,6 +1,5 @@
 node_modules/
-dist/
-dists/
+ACS_Backend/
 
 .DS_Store
 
