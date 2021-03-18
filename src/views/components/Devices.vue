@@ -67,7 +67,22 @@
           <span>Refresh</span>
         </v-tooltip>
         <v-spacer></v-spacer>
-
+          <v-btn
+            small
+            icon
+            @click="toggleSelect = !toggleSelect"
+            :color="`${toggleSelect ? 'primary':'none'}`"
+          >
+            <v-icon>mdi-table-edit</v-icon>
+          </v-btn>
+        <v-select
+          :items="headers"
+          multiple
+          v-if="toggleSelect"
+          v-model="selectedHeaders"
+          :menu-props="{value: toggleSelect}"
+          return-object
+        ></v-select>
         <v-dialog
           v-model="dialog"
           max-width="1000px"
@@ -81,7 +96,7 @@
               v-on="on"
               @click="initGroup"
             >
-              New Device
+              New Devices
             </v-btn>
           </template>
           <v-card>
@@ -351,6 +366,7 @@ import rogue from './Rogue-device.vue'
       'rogue-ap': rogue
     },
     data: () => ({
+      toggleSelect: false,
       dataloaded: 0,
       vsave: true,
       valid: false,
@@ -359,6 +375,7 @@ import rogue from './Rogue-device.vue'
       parent_watcher: '',
       serialList: [],
       selected: [],
+      selectedHeaders: [],
       search: '',
       code: '',
       cliheader: '',
