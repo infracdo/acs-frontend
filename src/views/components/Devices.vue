@@ -67,22 +67,6 @@
           <span>Refresh</span>
         </v-tooltip>
         <v-spacer></v-spacer>
-          <v-btn
-            small
-            icon
-            @click="toggleSelect = !toggleSelect"
-            :color="`${toggleSelect ? 'primary':'none'}`"
-          >
-            <v-icon>mdi-table-edit</v-icon>
-          </v-btn>
-        <v-select
-          :items="headers"
-          multiple
-          v-if="toggleSelect"
-          v-model="selectedHeaders"
-          :menu-props="{value: toggleSelect}"
-          return-object
-        ></v-select>
         <v-dialog
           v-model="dialog"
           max-width="1000px"
