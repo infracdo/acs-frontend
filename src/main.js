@@ -22,9 +22,9 @@ Vue.use(VueKeyCloak, {
     onLoad: 'login-required', "checkLoginIframe" : false
   },
   config: {
-    realm: 'acs-test-realm',
-    url: 'https://keycloak-test.apollo.com.ph/auth',
-    clientId: 'acs-user',
+    realm: 'ApolloACS',
+    url: 'https://auth.apollotech.co/auth',
+    clientId: 'Apollo',
   },
   onReady: () => {
     new Vue({

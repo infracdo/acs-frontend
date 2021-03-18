@@ -37,9 +37,8 @@ Vue.use(Router);
 
 export const constantRoutes = [
   {
-    path: '/landing',
-    alias: '/land',
-    component: () => import('@/views/auth/Landing.vue'),
+    path: '/',
+    redirect: '/Devices',
     hidden: true,
   },
   // {
