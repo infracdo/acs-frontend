@@ -23,4 +23,17 @@ export default {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+.v-data-table > .v-data-table__wrapper > table > tbody > tr > th,
+.v-data-table > .v-data-table__wrapper > table > thead > tr > th,
+.v-data-table > .v-data-table__wrapper > table > tfoot > tr > th {
+   font-size: 13px !important;
+}
+
+.v-subheader {
+    font-size: 13px;
+}
+strong {
+  color: red;
+}
 </style>
