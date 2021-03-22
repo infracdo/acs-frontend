@@ -340,14 +340,12 @@
     </template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon
-        small
         class="mr-2"
         @click="editItem(item)"
       >
         mdi-pencil
       </v-icon>
       <v-icon
-        small
         @click="opencli(item)"
       >
         mdi-console
@@ -410,31 +408,31 @@ import rogue from './Rogue-device.vue'
       filterableHeaders: [
         { text: 'Status', value: 'status', hidden: false },
         {
-          text: 'Device name',
+          text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
           hidden: false
         },
         { text: 'Group', value: 'parent', hidden: false },
-        { text: 'Mac address', value: 'mac_address', hidden: false},
-        { text: 'Offline time', value: 'date_offline', hidden: false},
-        { text: 'Modified time', value: 'date_modified', hidden: false},
+        { text: 'Mac Address', value: 'mac_address', hidden: false},
+        { text: 'Offline Time', value: 'date_offline', hidden: false},
+        { text: 'Modified Time', value: 'date_modified', hidden: false},
       ],
       headers: [
         { text: 'Status', value: 'status', hidden: false },
         {
-          text: 'Device name',
+          text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
           hidden: false,
         },
-        { text: 'Serial number', value: 'serial_number', hidden: false, },
+        { text: 'Serial Number', value: 'serial_number', hidden: false, },
         { text: 'Group', value: 'parent', hidden: false,},
-        { text: 'Mac address', value: 'mac_address', hidden: false,},
-        { text: 'Offline time', value: 'date_offline', hidden: false,},
-        { text: 'Modified time', value: 'date_modified', hidden: false,},
+        { text: 'Mac Address', value: 'mac_address', hidden: false,},
+        { text: 'Offline Time', value: 'date_offline', hidden: false,},
+        { text: 'Modified Time', value: 'date_modified', hidden: false,},
         { text: 'Action', value: 'actions', sortable: false, hidden: false,},
       ],
     serialRules: [

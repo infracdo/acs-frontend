@@ -95,7 +95,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Forward mode</v-subheader>
+                    <v-subheader>Forward Mode</v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -372,14 +372,12 @@
     </template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon
-        small
         class="mr-2"
         @click="editItem(item)"
       >
         mdi-pencil
       </v-icon>
       <v-icon
-        small
         @click="deleteItem(item)"
       >
         mdi-delete
@@ -537,14 +535,12 @@
     </template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon
-        small
         class="mr-2"
         @click="ceditItem(item)"
       >
         mdi-pencil
       </v-icon>
       <v-icon
-        small
         @click="cdeleteItem(item)"
       >
         mdi-delete
