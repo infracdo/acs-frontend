@@ -250,6 +250,17 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="Multi_dialogDelete" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="Multi_closeDelete">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="Multi_deleteItemConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="dialogDelete" max-width="500px">
           <v-card>
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
@@ -374,34 +385,35 @@ import config from "@/http-config";
       getcode: '',
       dialog: false,
       dialogDelete: false,
+      Multi_dialogDelete: false,
       dialogcli: false,
       dialogMove: false,
       filterableHeaders: [
         { text: 'Status', value: 'status', hidden: false },
         {
-          text: 'Device name',
+          text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
           hidden: false
         },
         { text: 'Group', value: 'parent', hidden: false },
-        { text: 'Mac address', value: 'mac_address', hidden: false},
-        { text: 'Offline time', value: 'date_offline', hidden: false},
+        { text: 'Mac Address', value: 'mac_address', hidden: false},
+        { text: 'Offline Time', value: 'date_offline', hidden: false},
       ],
       headers: [
         { text: 'Status', value: 'status', hidden: false },
         {
-          text: 'Device name',
+          text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
           hidden: false,
         },
-        { text: 'Serial number', value: 'serial_number', hidden: false, },
+        { text: 'Serial Number', value: 'serial_number', hidden: false, },
         { text: 'Group', value: 'parent', hidden: false,},
-        { text: 'Mac address', value: 'mac_address', hidden: false,},
-        { text: 'Offline time', value: 'date_offline', hidden: false,},
+        { text: 'Mac Address', value: 'mac_address', hidden: false,},
+        { text: 'Offline Time', value: 'date_offline', hidden: false,},
         { text: 'Action', value: 'actions', sortable: false, hidden: false,},
       ],
     serialRules: [
@@ -472,6 +484,9 @@ import config from "@/http-config";
       },
       dialogDelete (val) {
         val || this.closeDelete()
+      },
+      Multi_dialogDelete (val) {
+        val || this.Multi_closeDelete()
       },
     },
 
@@ -586,6 +601,23 @@ import config from "@/http-config";
         this.selected = []
       },
 
+      Multi_deleteItemConfirm () {
+        var i;
+        for (i in this.selected) {
+        this.device.splice(this.device.indexOf(this.selected[i]), 1)
+        this.Multi_closeDelete()
+        http
+            .delete("/deletedevice/" + this.selected[i].id)
+            .then(response => {
+            console.log(response.data);
+            })
+            .catch(e => {
+            console.log(e);
+            });
+          };
+          this.selected = [];
+      },
+
       deleteItem (item) {
         this.editedIndex = this.device.indexOf(item)
         this.editedItem = Object.assign({}, item)
@@ -606,20 +638,7 @@ import config from "@/http-config";
       },
       actions (index) {
         if(index==2){
-          var i, x = new Array();
-          for (i in this.selected) {
-        console.log(this.selected[i].device_name);
-        this.device.splice(this.device.indexOf(this.selected[i]), 1)
-        http
-            .delete("/deletedevice/" + this.selected[i].id)
-            .then(response => {
-            console.log(response.data);
-            })
-            .catch(e => {
-            console.log(e);
-            });
-          };
-          this.selected = [];
+          this.Multi_dialogDelete = true
         }
         else if(index==0){
           var i, x = new Array();
@@ -690,6 +709,10 @@ import config from "@/http-config";
           this.editedItem.parent = this.group_list[0]
           this.editedIndex = -1
         })
+      },
+
+      Multi_closeDelete () {
+        this.Multi_dialogDelete = false
       },
 
       closeDelete () {
