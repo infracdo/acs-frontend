@@ -2,7 +2,7 @@
   <div>
   <v-data-table
     v-model="selected"
-    :headers="headers"
+    :headers="computedHeaders"
     :items="device"
     :search="search"
     item-key="serial_number"
@@ -67,6 +67,37 @@
           <span>Refresh</span>
         </v-tooltip>
         <v-spacer></v-spacer>
+      <v-menu offset-y :close-on-content-click="false" left>
+        <template v-slot:activator="{ on: menu, attrs }">
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on: tooltip }">
+          <v-btn
+            color="primary"
+            dark
+            v-bind="attrs"
+            v-on="{ ...tooltip, ...menu }"
+            icon
+          >
+            <v-icon dark>mdi-table-edit</v-icon>
+          </v-btn>
+          </template>
+          <span>Filter Column</span>
+        </v-tooltip>
+        </template>
+        <v-list dense>
+          <v-list-item
+            v-for="(item, index) in filterableHeaders"
+            :key="index"
+          >
+                <v-checkbox
+                  v-model="item.hidden"
+                  :label="item.text"
+                  dense
+                  hide-details
+                ></v-checkbox>
+          </v-list-item>
+        </v-list>
+      </v-menu>
         <v-dialog
           v-model="dialog"
           max-width="1000px"
@@ -331,7 +362,7 @@
     multiple
   >
   <v-expansion-panel>
-  <v-expansion-panel-header>Show rogue devices</v-expansion-panel-header>
+  <v-expansion-panel-header>Show rogue devicess</v-expansion-panel-header>
   <v-expansion-panel-content>
   <rogue-ap></rogue-ap>
   </v-expansion-panel-content>
@@ -350,6 +381,7 @@ import rogue from './Rogue-device.vue'
       'rogue-ap': rogue
     },
     data: () => ({
+      hideStatus: false,
       toggleSelect: false,
       dataloaded: 0,
       vsave: true,
@@ -359,7 +391,6 @@ import rogue from './Rogue-device.vue'
       parent_watcher: '',
       serialList: [],
       selected: [],
-      selectedHeaders: [],
       search: '',
       code: '',
       cliheader: '',
@@ -376,20 +407,35 @@ import rogue from './Rogue-device.vue'
       dialogDelete: false,
       dialogcli: false,
       dialogMove: false,
-      headers: [
-        { text: 'Status', value: 'status' },
+      filterableHeaders: [
+        { text: 'Status', value: 'status', hidden: false },
         {
-          text: 'Device_name',
+          text: 'Device name',
           align: 'start',
           sortable: false,
           value: 'device_name',
+          hidden: false
         },
-        { text: 'Serial number', value: 'serial_number' },
-        { text: 'Group', value: 'parent' },
-        { text: 'Mac address', value: 'mac_address' },
-        { text: 'Offline time', value: 'date_offline' },
-        { text: 'Modified time', value: 'date_modified' },
-        { text: 'Action', value: 'actions', sortable: false },
+        { text: 'Group', value: 'parent', hidden: false },
+        { text: 'Mac address', value: 'mac_address', hidden: false},
+        { text: 'Offline time', value: 'date_offline', hidden: false},
+        { text: 'Modified time', value: 'date_modified', hidden: false},
+      ],
+      headers: [
+        { text: 'Status', value: 'status', hidden: false },
+        {
+          text: 'Device name',
+          align: 'start',
+          sortable: false,
+          value: 'device_name',
+          hidden: false,
+        },
+        { text: 'Serial number', value: 'serial_number', hidden: false, },
+        { text: 'Group', value: 'parent', hidden: false,},
+        { text: 'Mac address', value: 'mac_address', hidden: false,},
+        { text: 'Offline time', value: 'date_offline', hidden: false,},
+        { text: 'Modified time', value: 'date_modified', hidden: false,},
+        { text: 'Action', value: 'actions', sortable: false, hidden: false,},
       ],
     serialRules: [
       v => !!v || 'Serial is required',
@@ -441,6 +487,16 @@ import rogue from './Rogue-device.vue'
       formTitle () {
         return this.editedIndex === -1 ? 'New Device' : 'Edit Device'
       },
+    computedHeaders () {
+      var i, returnHeaders = new Array();
+      returnHeaders = this.headers;
+      for(i in this.filterableHeaders){
+        if(this.filterableHeaders[i].hidden)
+          returnHeaders = returnHeaders.filter(headers => headers.text !== this.filterableHeaders[i].text)
+      }
+      
+      return returnHeaders;
+    }
     },
 
     watch: {
@@ -460,6 +516,10 @@ import rogue from './Rogue-device.vue'
       clearInterval(this.timer)
     },
     methods: {
+    hideStatussToggle () {
+      console.log(this.headers[0].hidden)
+      this.headers[0].hidden = !this.headers[0].hidden
+    },
       todo: function(){           
           this.timer = setInterval(function(){
             if(this.selected.length<=0) this.initialize();
