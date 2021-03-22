@@ -263,6 +263,17 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="Multi_dialogDelete" max-width="500px">
+          <v-card>
+            <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="Multi_closeDelete">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="Multi_deleteItemConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="dialogDelete" max-width="500px">
           <v-card>
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
@@ -360,7 +371,7 @@
     multiple
   >
   <v-expansion-panel>
-  <v-expansion-panel-header>Show rogue devicess</v-expansion-panel-header>
+  <v-expansion-panel-header>Show rogue devices</v-expansion-panel-header>
   <v-expansion-panel-content>
   <rogue-ap></rogue-ap>
   </v-expansion-panel-content>
@@ -403,6 +414,7 @@ import rogue from './Rogue-device.vue'
       getcode: '',
       dialog: false,
       dialogDelete: false,
+      Multi_dialogDelete: false,
       dialogcli: false,
       dialogMove: false,
       filterableHeaders: [
@@ -504,6 +516,9 @@ import rogue from './Rogue-device.vue'
       dialogDelete (val) {
         val || this.closeDelete()
       },
+      Multi_dialogDelete (val) {
+        val || this.Multi_closeDelete()
+      },
     },
 
     created () {
@@ -514,10 +529,6 @@ import rogue from './Rogue-device.vue'
       clearInterval(this.timer)
     },
     methods: {
-    hideStatussToggle () {
-      console.log(this.headers[0].hidden)
-      this.headers[0].hidden = !this.headers[0].hidden
-    },
       todo: function(){           
           this.timer = setInterval(function(){
             if(this.selected.length<=0) this.initialize();
@@ -621,6 +632,23 @@ import rogue from './Rogue-device.vue'
         this.selected = []
       },
 
+      Multi_deleteItemConfirm () {
+        var i;
+        for (i in this.selected) {
+        this.device.splice(this.device.indexOf(this.selected[i]), 1)
+        this.Multi_closeDelete()
+        http
+            .delete("/deletedevice/" + this.selected[i].id)
+            .then(response => {
+            console.log(response.data);
+            })
+            .catch(e => {
+            console.log(e);
+            });
+          };
+          this.selected = [];
+      },
+
       deleteItem (item) {
         this.editedIndex = this.device.indexOf(item)
         this.editedItem = Object.assign({}, item)
@@ -641,20 +669,7 @@ import rogue from './Rogue-device.vue'
       },
       actions (index) {
         if(index==2){
-          var i, x = new Array();
-          for (i in this.selected) {
-        console.log(this.selected[i].device_name);
-        this.device.splice(this.device.indexOf(this.selected[i]), 1)
-        http
-            .delete("/deletedevice/" + this.selected[i].id)
-            .then(response => {
-            console.log(response.data);
-            })
-            .catch(e => {
-            console.log(e);
-            });
-          };
-          this.selected = [];
+          this.Multi_dialogDelete = true
         }
         else if(index==0){
           var i, x = new Array();
@@ -725,6 +740,10 @@ import rogue from './Rogue-device.vue'
           this.editedItem.parent = this.group_list[0]
           this.editedIndex = -1
         })
+      },
+
+      Multi_closeDelete () {
+        this.Multi_dialogDelete = false
       },
 
       closeDelete () {
