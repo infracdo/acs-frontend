@@ -90,7 +90,7 @@
             :key="index"
           >
                 <v-checkbox
-                  v-model="item.hidden"
+                  v-model="item.show"
                   :label="item.text"
                   dense
                   hide-details
@@ -100,6 +100,7 @@
       </v-menu>
         <v-dialog
           v-model="dialog"
+          persistent
           max-width="1000px"
         >
           <template v-slot:activator="{ on, attrs }">
@@ -263,6 +264,17 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="dialogCancel" max-width="520px">
+          <v-card>
+            <v-card-title class="headline">Data has not been saved. Are you sure to cancel?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="cancelConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="Multi_dialogDelete" max-width="500px">
           <v-card>
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
@@ -414,38 +426,39 @@ import rogue from './Rogue-device.vue'
       getcode: '',
       dialog: false,
       dialogDelete: false,
+      dialogCancel: false,
       Multi_dialogDelete: false,
       dialogcli: false,
       dialogMove: false,
       filterableHeaders: [
-        { text: 'Status', value: 'status', hidden: false },
+        { text: 'Status', value: 'status', show: true },
         {
           text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
-          hidden: false
+          show: true
         },
-        { text: 'Group', value: 'parent', hidden: false },
-        { text: 'Mac Address', value: 'mac_address', hidden: false},
-        { text: 'Offline Time', value: 'date_offline', hidden: false},
-        { text: 'Modified Time', value: 'date_modified', hidden: false},
+        { text: 'Group', value: 'parent', show: true },
+        { text: 'Mac Address', value: 'mac_address', show: true},
+        { text: 'Offline Time', value: 'date_offline', show: true},
+        { text: 'Modified Time', value: 'date_modified', show: true},
       ],
       headers: [
-        { text: 'Status', value: 'status', hidden: false },
+        { text: 'Status', value: 'status', show: true },
         {
           text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
-          hidden: false,
+          show: true
         },
-        { text: 'Serial Number', value: 'serial_number', hidden: false, },
-        { text: 'Group', value: 'parent', hidden: false,},
-        { text: 'Mac Address', value: 'mac_address', hidden: false,},
-        { text: 'Offline Time', value: 'date_offline', hidden: false,},
-        { text: 'Modified Time', value: 'date_modified', hidden: false,},
-        { text: 'Action', value: 'actions', sortable: false, hidden: false,},
+        { text: 'Serial Number', value: 'serial_number', show: true },
+        { text: 'Group', value: 'parent', show: true },
+        { text: 'Mac Address', value: 'mac_address', show: true },
+        { text: 'Offline Time', value: 'date_offline', show: true },
+        { text: 'Modified Time', value: 'date_modified', show: true },
+        { text: 'Action', value: 'actions', sortable: false, show: true },
       ],
     serialRules: [
       v => !!v || 'Serial is required',
@@ -473,7 +486,7 @@ import rogue from './Rogue-device.vue'
         location: '',
         mac_address: '',
         parent: '/apollo',
-        device_type: 'Acess Point',
+        device_type: 'Access Point',
         serial_number: '',
       },
       defaultItem: {
@@ -488,7 +501,7 @@ import rogue from './Rogue-device.vue'
         location: '',
         mac_address: '',
         parent: '',
-        device_type: 'Acess Point',
+        device_type: 'Access Point',
         serial_number: '',
       },
     }),
@@ -501,7 +514,7 @@ import rogue from './Rogue-device.vue'
       var i, returnHeaders = new Array();
       returnHeaders = this.headers;
       for(i in this.filterableHeaders){
-        if(this.filterableHeaders[i].hidden)
+        if(!this.filterableHeaders[i].show)
           returnHeaders = returnHeaders.filter(headers => headers.text !== this.filterableHeaders[i].text)
       }
       
@@ -518,6 +531,9 @@ import rogue from './Rogue-device.vue'
       },
       Multi_dialogDelete (val) {
         val || this.Multi_closeDelete()
+      },
+      dialogCancel (val) {
+        val || this.cancelClose()
       },
     },
 
@@ -649,6 +665,13 @@ import rogue from './Rogue-device.vue'
           this.selected = [];
       },
 
+      cancelConfirm () {
+        this.editedItem.device_name = '';
+        this.editedItem.serial_number = '';
+        this.close();
+        this.cancelClose();
+      },
+
       deleteItem (item) {
         this.editedIndex = this.device.indexOf(item)
         this.editedItem = Object.assign({}, item)
@@ -731,6 +754,7 @@ import rogue from './Rogue-device.vue'
          console.log(this.cliserial);
       },
       close () {
+        if(!this.editedItem.device_name && !this.editedItem.serial_number){
         this.serialRules.splice(3, 1)
         this.$refs.form.resetValidation()
         this.valid = false;
@@ -740,6 +764,12 @@ import rogue from './Rogue-device.vue'
           this.editedItem.parent = this.group_list[0]
           this.editedIndex = -1
         })
+        }
+        else this.dialogCancel = true;
+      },
+
+      cancelClose () {
+        this.dialogCancel = false;
       },
 
       Multi_closeDelete () {

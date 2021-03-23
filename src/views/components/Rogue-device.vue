@@ -89,7 +89,7 @@
             :key="index"
           >
                 <v-checkbox
-                  v-model="item.hidden"
+                  v-model="item.show"
                   :label="item.text"
                   dense
                   hide-details
@@ -389,32 +389,32 @@ import config from "@/http-config";
       dialogcli: false,
       dialogMove: false,
       filterableHeaders: [
-        { text: 'Status', value: 'status', hidden: false },
+        { text: 'Status', value: 'status', show: false },
         {
           text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
-          hidden: false
+          show: true
         },
-        { text: 'Group', value: 'parent', hidden: false },
-        { text: 'Mac Address', value: 'mac_address', hidden: false},
-        { text: 'Offline Time', value: 'date_offline', hidden: false},
+        { text: 'Group', value: 'parent', show: true },
+        { text: 'Mac Address', value: 'mac_address', show: true },
+        { text: 'Offline Time', value: 'date_offline', show: true },
       ],
       headers: [
-        { text: 'Status', value: 'status', hidden: false },
+        { text: 'Status', value: 'status', show: true },
         {
           text: 'Device Name',
           align: 'start',
           sortable: false,
           value: 'device_name',
-          hidden: false,
+          show: true,
         },
-        { text: 'Serial Number', value: 'serial_number', hidden: false, },
-        { text: 'Group', value: 'parent', hidden: false,},
-        { text: 'Mac Address', value: 'mac_address', hidden: false,},
-        { text: 'Offline Time', value: 'date_offline', hidden: false,},
-        { text: 'Action', value: 'actions', sortable: false, hidden: false,},
+        { text: 'Serial Number', value: 'serial_number', show: true },
+        { text: 'Group', value: 'parent', show: true },
+        { text: 'Mac Address', value: 'mac_address', show: true },
+        { text: 'Offline Time', value: 'date_offline', show: true },
+        { text: 'Action', value: 'actions', sortable: false, show: true },
       ],
     serialRules: [
       v => !!v || 'Serial is required',
@@ -470,7 +470,7 @@ import config from "@/http-config";
       var i, returnHeaders = new Array();
       returnHeaders = this.headers;
       for(i in this.filterableHeaders){
-        if(this.filterableHeaders[i].hidden)
+        if(!this.filterableHeaders[i].show)
           returnHeaders = returnHeaders.filter(headers => headers.text !== this.filterableHeaders[i].text)
       }
       
