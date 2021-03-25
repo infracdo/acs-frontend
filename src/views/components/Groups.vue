@@ -146,6 +146,17 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="dialogCancel" max-width="520px">
+          <v-card>
+            <v-card-title class="headline">Data has not been saved. Are you sure to cancel?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="cancelConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="dialogDelete" max-width="500px">
           <v-card>
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
@@ -161,14 +172,12 @@
     </template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon
-        small
         class="mr-2"
         @click="editItem(item)"
       >
         mdi-pencil
       </v-icon>
       <v-icon
-        small
         @click="deleteItem(item)"
       >
         mdi-delete
@@ -188,8 +197,10 @@ import http from "@/http-common";
       dataloaded: 0,
       search: '',
       valid: false,
+      isSave: false,
       dialog: false,
       dialogDelete: false,
+      dialogCancel: false,
       headers: [
         {
           text: 'Group name',
@@ -269,6 +280,13 @@ import http from "@/http-common";
         this.editedItem = Object.assign({}, item)
       },
 
+      cancelConfirm () {
+        this.editedItem.group_name = '';
+        this.editedItem.location = '';
+        this.close();
+        this.cancelClose();
+      },
+
       deleteItem (item) {
         this.editedIndex = this.group.indexOf(item)
         this.editedItem = Object.assign({}, item)
@@ -288,13 +306,20 @@ import http from "@/http-common";
             });
       },
 
+      cancelClose () {
+        this.dialogCancel = false;
+      },
+
       close () {
-        this.$refs.form.resetValidation()
-        this.dialog = false
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-        })
+        if((!this.editedItem.group_name && !this.editedItem.location) || this.isSave){
+          this.$refs.form.resetValidation()
+          this.dialog = false
+          this.$nextTick(() => {
+            this.editedItem = Object.assign({}, this.defaultItem)
+            this.editedIndex = -1
+            this.isSave = false;
+          })
+        }else this.dialogCancel = true;
       },
       closeDelete () {
         this.dialogDelete = false
@@ -327,6 +352,7 @@ import http from "@/http-common";
                 console.log(e);
                 });
         }
+        this.isSave = true
         this.close()
       },
     },

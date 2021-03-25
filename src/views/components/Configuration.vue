@@ -46,6 +46,7 @@
         <v-spacer></v-spacer>
         <v-dialog
           v-model="dialog"
+          persistent
           max-width="1000px"
         >
           <template v-slot:activator="{ on, attrs }">
@@ -95,7 +96,7 @@
                         cols="1"
                         md="1"
                     >
-                    <v-subheader>Forward mode</v-subheader>
+                    <v-subheader>Forward Mode</v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
@@ -357,6 +358,17 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="dialogCancel" max-width="520px">
+          <v-card>
+            <v-card-title class="headline">Data has not been saved. Are you sure to cancel?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="cancelConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="dialogDelete" max-width="500px">
           <v-card>
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
@@ -372,14 +384,12 @@
     </template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon
-        small
         class="mr-2"
         @click="editItem(item)"
       >
         mdi-pencil
       </v-icon>
       <v-icon
-        small
         @click="deleteItem(item)"
       >
         mdi-delete
@@ -537,14 +547,12 @@
     </template>
     <template v-slot:[`item.actions`]="{ item }">
       <v-icon
-        small
         class="mr-2"
         @click="ceditItem(item)"
       >
         mdi-pencil
       </v-icon>
       <v-icon
-        small
         @click="cdeleteItem(item)"
       >
         mdi-delete
@@ -570,12 +578,16 @@ import config from "@/http-config";
       modelArray: [],
       dataloaded: 0,
       requestFailed: 0,
+      isCancel: false,
+      isSave: false,
       valid: false,
       cvalid: false,
       cdialog: false,
       dialog: false,
       dialogDelete: false,
       cdialogDelete: false,
+      dialogCancel: false,
+      dataTracker: [],
       parent_watcher: '',
       headers: [
         {
@@ -693,6 +705,9 @@ import config from "@/http-config";
       cdialogDelete (val) {
         val || this.ccloseDelete()
       },
+      dialogCancel (val) {
+        val || this.cancelClose()
+      },
     },
 
     created () {
@@ -712,6 +727,7 @@ import config from "@/http-config";
         }
         console.log("initialized dataloaded: " + this.dataloaded)
         console.log("initialized request: " + this.requestFailed)
+        this.dataTracker = this.editedItem;
       },
 
       updatessid () {
@@ -801,6 +817,14 @@ import config from "@/http-config";
         this.cdialog = true
       },
 
+      cancelConfirm () {
+        this.editedItem.auth = false;
+        this.editedItem.limitless = false;
+        this.editedItem.ssid = '';
+        this.close()
+        this.cancelClose()
+      },
+
       deleteItem (item) {
         this.editedIndex = this.ssid.indexOf(item)
         this.allssidIndex = this.all_ssid.indexOf(item)
@@ -855,16 +879,25 @@ import config from "@/http-config";
             });
       },
 
+      cancelClose () {
+        this.dialogCancel = false;
+      },
+
       close () {
-        this.$refs.form.resetValidation()
-        this.parent_watcher = this.editedItem.parent
-        this.valid = false;
-        this.dialog = false
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedItem.parent = this.parent_watcher
-          this.editedIndex = -1
-        })
+        if((!this.editedItem.ssid && !this.editedItem.limitless && !this.editedItem.auth) || this.isSave){
+          this.$refs.form.resetValidation();
+          this.parent_watcher = this.editedItem.parent;
+          this.valid = false;
+          this.dialog = false;
+          this.$nextTick(() => {
+            this.editedItem = Object.assign({}, this.defaultItem)
+            this.editedItem.parent = this.parent_watcher
+            this.editedIndex = -1
+            this.isSave = false
+          })
+        }else {
+          this.dialogCancel = true;
+        }
       },
 
       closeDelete () {
@@ -1070,6 +1103,7 @@ import config from "@/http-config";
                 });
 
         }
+        this.isSave = true
         this.close()
       },
     },
