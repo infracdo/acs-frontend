@@ -1,6 +1,6 @@
 node_modules/
 ACS_Backend/
-
+package-lock.json
 .DS_Store
 
 # local env files
