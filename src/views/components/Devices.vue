@@ -137,6 +137,7 @@
                         md="4"
                     >
                         <v-text-field
+                        @keydown="filterKeyPress($event)"
                         v-model="editedItem.serial_number"
                         :disabled="editedIndex!=-1"
                         :rules="serialRules"
@@ -179,6 +180,7 @@
                         md="4"
                     >
                         <v-text-field
+                        @keydown="filterKeyPress($event)"
                         v-model="editedItem.device_name"
                         :rules="[v => !!v || 'Name is required']"
                         required
@@ -264,9 +266,9 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="dialogCancel" max-width="520px">
+        <v-dialog v-model="dialogCancel" max-width="470px">
           <v-card>
-            <v-card-title class="headline">Data has not been saved. Are you sure to cancel?</v-card-title>
+            <v-card-title class="headline">Data has not been saved. Are you sure you want to proceed?</v-card-title>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
@@ -319,6 +321,7 @@
                         md="8"
                     >
                         <v-text-field
+                        @keydown="detectKeyPress($event)"
                         v-model="getcode"
                         required
                         outlined
@@ -383,7 +386,7 @@
     multiple
   >
   <v-expansion-panel>
-  <v-expansion-panel-header>Show rogue devices</v-expansion-panel-header>
+  <v-expansion-panel-header>Show rogue devicess</v-expansion-panel-header>
   <v-expansion-panel-content>
   <rogue-ap></rogue-ap>
   </v-expansion-panel-content>
@@ -410,6 +413,7 @@ import rogue from './Rogue-device.vue'
       singleSelect: false,
       alert: false,
       parent_watcher: '',
+      isSave: false,
       serialList: [],
       selected: [],
       search: '',
@@ -545,6 +549,21 @@ import rogue from './Rogue-device.vue'
       clearInterval(this.timer)
     },
     methods: {
+
+      filterKeyPress (e) {
+        if(!e.key.match(/^[a-zA-Z]|^-|^_|^\d*$/))
+        {
+            e.preventDefault();
+        }
+      },
+
+      detectKeyPress (e) {
+        if(e.keyCode === 13)
+        {
+            this.sendcode(this.getcode);
+        }
+      },
+      
       todo: function(){           
           this.timer = setInterval(function(){
             if(this.selected.length<=0) this.initialize();
@@ -730,31 +749,31 @@ import rogue from './Rogue-device.vue'
         else this.cliheader= item.device_name;
       },
       sendcode (text) {
-      this.getcode = '';
-      var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+'}';
-      console.log(body);
-      this.code += text + "\n";
-      config
-        .post("/WebCli/"+this.cliserial+", " + text, body)
-        .then(response => {
-          this.code += response.data.content; // JSON are parsed automatically.
-          this.apname=response.data.mode_tip
-          this.mode_url=response.data.mode_url
-          this.mode_idtx=response.data.mode_idtx
-          this.mode_idtx1=response.data.mode_idtx1
-          this.mode_idtx2=response.data.mode_idtx2
-          this.mode_stridx=response.data.mode_stridx
-          this.mode_prompt=response.data.mode_prompt
-          this.code += this.apname;
-          console.log(response.data);
-        })
-        .catch(e => {
-          console.log(e);
-        });
-         console.log(this.cliserial);
+        this.getcode = '';
+        var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+'}';
+        console.log(body);
+        this.code += text + "\n";
+        config
+          .post("/WebCli/"+this.cliserial+", " + text, body)
+          .then(response => {
+            this.code += response.data.content; // JSON are parsed automatically.
+            this.apname=response.data.mode_tip
+            this.mode_url=response.data.mode_url
+            this.mode_idtx=response.data.mode_idtx
+            this.mode_idtx1=response.data.mode_idtx1
+            this.mode_idtx2=response.data.mode_idtx2
+            this.mode_stridx=response.data.mode_stridx
+            this.mode_prompt=response.data.mode_prompt
+            this.code += this.apname;
+            console.log(response.data);
+          })
+          .catch(e => {
+            console.log(e);
+          });
+          console.log(this.cliserial);
       },
       close () {
-        if(!this.editedItem.device_name && !this.editedItem.serial_number){
+        if((!this.editedItem.device_name && !this.editedItem.serial_number) || this.isSave){
         this.serialRules.splice(3, 1)
         this.$refs.form.resetValidation()
         this.valid = false;
@@ -763,6 +782,7 @@ import rogue from './Rogue-device.vue'
           this.editedItem = Object.assign({}, this.defaultItem)
           this.editedItem.parent = this.group_list[0]
           this.editedIndex = -1
+          this.isSave = false
         })
         }
         else this.dialogCancel = true;
@@ -785,54 +805,43 @@ import rogue from './Rogue-device.vue'
       },
 
       save () {
-        if(this.valid){
-          this.$refs.form.resetValidation()
-          if (this.editedIndex > -1) {
-            Object.assign(this.device[this.editedIndex], this.editedItem)
-            console.log(this.editedItem)
-              http
-                .put("/updatedevice/" + this.editedItem.id, this.editedItem)
+        if (this.editedIndex > -1) {
+          Object.assign(this.device[this.editedIndex], this.editedItem)
+          console.log(this.editedItem)
+            http
+              .put("/updatedevice/" + this.editedItem.id, this.editedItem)
+              .then(response => {
+                console.log(response.data);
+              })
+              .catch(e => {
+                console.log(e);
+              });
+              this.close()
+          if(this.parent_watcher!=this.editedItem.parent){
+            config
+                .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
                 .then(response => {
-                  console.log(response.data);
+                console.log(response.data);
                 })
                 .catch(e => {
-                  console.log(e);
+                console.log(e);
                 });
-                this.close()
-            if(this.parent_watcher!=this.editedItem.parent){
-              config
-                  .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
-                  .then(response => {
-                  console.log(response.data);
-                  })
-                  .catch(e => {
-                  console.log(e);
-                  });
-            }
-
-          } else {
-            var i, x = new Array(), c=true;
-            
-            for (i in this.device) {
-              if(this.device[i].serial_number==this.editedItem.serial_number){
-                c=false;
-              }
-            }
-            if(c){
-            this.device.push(this.editedItem)
-              http
-                  .post("/adddevice", this.editedItem)
-                  .then(response => {
-                  this.device[this.device.length-1].id = response.data.id;
-                  console.log(this.editedItem);
-                  })
-                  .catch(e => {
-                  console.log(e);
-                  });
-                this.close()
-            }else this.alert=true;
           }
+
+        } else {
+          this.device.push(this.editedItem)
+            http
+                .post("/adddevice", this.editedItem)
+                .then(response => {
+                this.device[this.device.length-1].id = response.data.id;
+                console.log(this.editedItem);
+                })
+                .catch(e => {
+                console.log(e);
+                });
         }
+        this.isSave = true
+        this.close()
       },
     },
   }

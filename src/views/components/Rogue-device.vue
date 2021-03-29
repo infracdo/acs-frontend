@@ -250,6 +250,17 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="dialogCancel" max-width="470px">
+          <v-card>
+            <v-card-title class="headline">Data has not been saved. Are you sure you want to proceed?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="cancelConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="Multi_dialogDelete" max-width="500px">
           <v-card>
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
@@ -367,6 +378,7 @@ import config from "@/http-config";
       vsave: true,
       valid: false,
       singleSelect: false,
+      isSave: false,
       alert: false,
       parent_watcher: '',
       serialList: [],
@@ -385,11 +397,12 @@ import config from "@/http-config";
       getcode: '',
       dialog: false,
       dialogDelete: false,
+      dialogCancel : false,
       Multi_dialogDelete: false,
       dialogcli: false,
       dialogMove: false,
       filterableHeaders: [
-        { text: 'Status', value: 'status', show: false },
+        { text: 'Status', value: 'status', show: true },
         {
           text: 'Device Name',
           align: 'start',
@@ -442,7 +455,7 @@ import config from "@/http-config";
         location: '',
         mac_address: '',
         parent: '/apollo',
-        device_type: 'Acess Point',
+        device_type: 'Access Point',
         serial_number: '',
       },
       defaultItem: {
@@ -457,7 +470,7 @@ import config from "@/http-config";
         location: '',
         mac_address: '',
         parent: '',
-        device_type: 'Acess Point',
+        device_type: 'Access Point',
         serial_number: '',
       },
     }),
@@ -551,6 +564,17 @@ import config from "@/http-config";
         this.editedItem = Object.assign({}, item)
       },
 
+      cancelClose () {
+        this.dialogCancel = false;
+      },
+
+      cancelConfirm () {
+        this.editedItem.device_name = '';
+        this.editedItem.parent = '';
+        this.close();
+        this.cancelClose();
+      },
+      
       initGroup () {
         http
           .get("/getgroup")
@@ -700,15 +724,18 @@ import config from "@/http-config";
          console.log(this.cliserial);
       },
       close () {
-        this.serialRules.splice(3, 1)
-        this.$refs.form.resetValidation()
-        this.valid = false;
-        this.dialog = false
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedItem.parent = this.group_list[0]
-          this.editedIndex = -1
-        })
+        if((!this.editedItem.parent && !this.editedItem.device_name) || this.isSave){
+          this.serialRules.splice(3, 1)
+          this.$refs.form.resetValidation()
+          this.valid = false;
+          this.dialog = false
+          this.$nextTick(() => {
+            this.editedItem = Object.assign({}, this.defaultItem)
+            this.editedItem.parent = this.group_list[0]
+            this.editedIndex = -1
+            this.isSave = true
+          })
+        }else this.dialogCancel = true;
       },
 
       Multi_closeDelete () {
@@ -724,8 +751,6 @@ import config from "@/http-config";
       },
 
       save () {
-        if(this.valid){
-          this.$refs.form.resetValidation()
           if (this.editedIndex > -1) {
             Object.assign(this.device[this.editedIndex], this.editedItem)
             console.log(this.editedItem)
@@ -737,7 +762,6 @@ import config from "@/http-config";
                 .catch(e => {
                   console.log(e);
                 });
-                this.close()
             if(this.parent_watcher!=this.editedItem.parent){
               config
                   .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
@@ -750,14 +774,7 @@ import config from "@/http-config";
             }
 
           } else {
-            var i, x = new Array(), c=true;
             
-            for (i in this.device) {
-              if(this.device[i].serial_number==this.editedItem.serial_number){
-                c=false;
-              }
-            }
-            if(c){
             this.device.push(this.editedItem)
               http
                   .post("/adddevice", this.editedItem)
@@ -768,10 +785,9 @@ import config from "@/http-config";
                   .catch(e => {
                   console.log(e);
                   });
-                this.close()
-            }else this.alert=true;
           }
-        }
+        this.isSave = true
+        this.close()
       },
     },
   }
