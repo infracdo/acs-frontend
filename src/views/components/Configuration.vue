@@ -47,6 +47,7 @@
         <v-dialog
           v-model="dialog"
           persistent
+          :retain-focus="false"
           max-width="1000px"
         >
           <template v-slot:activator="{ on, attrs }">
@@ -423,6 +424,8 @@
         <v-spacer></v-spacer>
         <v-dialog
           max-width="800px"
+          persistent
+          :retain-focus="false"
           v-model="cdialog"
         >
           <template v-slot:activator="{ on, attrs }">
@@ -843,7 +846,8 @@ import config from "@/http-config";
         this.editedItem.ssid = '';
         this.citems.description = ''
         this.citems.command = ''
-        this.close()
+        if (this.dialog) this.close()
+        else this.cclose()
         this.cancelClose()
       },
 
@@ -907,7 +911,7 @@ import config from "@/http-config";
 
       close () {
         if((!this.editedItem.ssid && !this.editedItem.limitless && !this.editedItem.auth) || this.isSave){
-          this.$refs.form.resetValidation();
+          if (this.dialog) this.$refs.form.resetValidation();
           this.parent_watcher = this.editedItem.parent;
           this.valid = false;
           this.dialog = false;
@@ -1064,7 +1068,7 @@ import config from "@/http-config";
 
         }
         this.isSave = true
-        this.close()
+        this.cclose()
       },
       save () {
         if (this.editedIndex > -1) {
