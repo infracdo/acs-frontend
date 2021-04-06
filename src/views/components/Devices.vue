@@ -320,6 +320,8 @@
                         cols="8"
                         md="8"
                     >
+                      <v-menu offset-y v-model="suggestShow" max-height="200px" max-width="300" :nudge-right="getcode.length*5">
+                        <template v-slot:activator="{}">
                         <v-text-field
                         @keydown="detectKeyPress($event)"
                         v-model="getcode"
@@ -328,6 +330,17 @@
                         dense
                         class="mt-2"
                         ></v-text-field>
+                        </template>
+                    <v-list dense>
+                      <v-list-item
+                        v-for="(item, index) in sampleSuggest"
+                        :key="index"
+                        @click="selectSuggestion(item.text)"
+                      >
+                        <v-list-item-title>{{ item.text }}</v-list-item-title>
+                      </v-list-item>
+                    </v-list>
+                      </v-menu>
                     </v-col>
                     <v-col
                         cols="2"
@@ -405,6 +418,7 @@ import rogue from './Rogue-device.vue'
       'rogue-ap': rogue
     },
     data: () => ({
+      suggestShow: false,
       hideStatus: false,
       toggleSelect: false,
       dataloaded: 0,
@@ -434,6 +448,13 @@ import rogue from './Rogue-device.vue'
       Multi_dialogDelete: false,
       dialogcli: false,
       dialogMove: false,
+      sampleSuggest: [
+        { text: 'ap-mode', value: 'status', show: true },
+        { text: 'show', value: 'parent', show: true },
+        { text: 'clear', value: 'mac_address', show: true},
+        { text: 'debug', value: 'date_offline', show: true},
+        { text: 'conf t', value: 'date_modified', show: true},
+      ],
       filterableHeaders: [
         { text: 'Status', value: 'status', show: true },
         {
@@ -562,7 +583,16 @@ import rogue from './Rogue-device.vue'
         {
             this.sendcode(this.getcode);
         }
+        if(e.key === '?')
+        {
+            this.suggestShow = true;
+        }
       },
+
+      selectSuggestion( e ){
+        this.getcode = this.getcode.replace("?", e);
+      },
+
       
       todo: function(){           
           this.timer = setInterval(function(){
