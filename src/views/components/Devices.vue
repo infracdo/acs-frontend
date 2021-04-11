@@ -780,11 +780,11 @@ import rogue from './Rogue-device.vue'
       },
       sendcode (text) {
         this.getcode = '';
-        var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+'}';
+        var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+','+text+','+'}';
         console.log(body);
         this.code += text + "\n";
         config
-          .post("/WebCli/"+this.cliserial+", " + text, body)
+          .post("/WebCli/ "+this.cliserial, body)
           .then(response => {
             this.code += response.data.content; // JSON are parsed automatically.
             this.apname=response.data.mode_tip
