@@ -158,14 +158,14 @@
                         cols="4"
                         md="4"
                     >
-                        <v-select
+                        <v-autocomplete
                         :items="group_list"
                         v-model="editedItem.parent"
                         item-value="editedItem.parent[0]"
                         :rules="[v => !!v || 'Group is required']"
                         outlined
                         dense
-                        ></v-select>
+                        ></v-autocomplete>
                     </v-col>
                     </v-row>
                     <v-row no-gutters>
@@ -248,14 +248,14 @@
                         cols="6"
                         md="6"
                     >
-                        <v-select
+                        <v-autocomplete
                         :items="group_list"
                         v-model="editedItem.parent"
                         item-value="editedItem.parent[0]"
                         :rules="[v => !!v || 'Group is required']"
                         outlined
                         dense
-                        ></v-select>
+                        ></v-autocomplete>
                     </v-col>
                 </v-row>
             <v-card-actions>
@@ -320,7 +320,7 @@
                         cols="8"
                         md="8"
                     >
-                      <v-menu offset-y v-model="suggestShow" max-height="200px" max-width="300" :nudge-right="getcode.length*5">
+                      <v-menu offset-y v-model="suggestShow" max-height="200px" max-width="300" :nudge-right="(1+getcode.length)*15">
                         <template v-slot:activator="{}">
                         <v-text-field
                         @keydown="detectKeyPress($event)"
@@ -335,9 +335,9 @@
                       <v-list-item
                         v-for="(item, index) in sampleSuggest"
                         :key="index"
-                        @click="selectSuggestion(item.text)"
+                        @click="selectSuggestion(item)"
                       >
-                        <v-list-item-title>{{ item.text }}</v-list-item-title>
+                        <v-list-item-title>{{ item }}</v-list-item-title>
                       </v-list-item>
                     </v-list>
                       </v-menu>
@@ -585,7 +585,7 @@ import rogue from './Rogue-device.vue'
         }
         if(e.key === '?')
         {
-            this.suggestShow = true;
+            this.getSuggest(this.getcode);
         }
       },
 
@@ -787,6 +787,7 @@ import rogue from './Rogue-device.vue'
           .post("/WebCli/ "+this.cliserial, body)
           .then(response => {
             this.code += response.data.content; // JSON are parsed automatically.
+            console.log(this.sampleSuggest)
             this.apname=response.data.mode_tip
             this.mode_url=response.data.mode_url
             this.mode_idtx=response.data.mode_idtx
@@ -802,6 +803,34 @@ import rogue from './Rogue-device.vue'
           });
           console.log(this.cliserial);
       },
+
+      getSuggest (text) {
+        var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+','+text+'?'+','+'}';
+        config
+          .post("/CliAutoComplete/ "+this.cliserial, body)
+          .then(response => {
+            this.sampleSuggest = response.data.content.split("\r\n")
+            var i;
+            for (i in this.sampleSuggest) {
+                console.log(this.sampleSuggest[i])
+                this.sampleSuggest[i] = this.sampleSuggest[i].slice(2)
+                console.log(this.sampleSuggest[i].indexOf(" "))
+                this.sampleSuggest[i] = this.sampleSuggest[i].substring(0,this.sampleSuggest[i].indexOf(" "))
+            }
+            this.apname=response.data.mode_tip
+            this.mode_url=response.data.mode_url
+            this.mode_idtx=response.data.mode_idtx
+            this.mode_idtx1=response.data.mode_idtx1
+            this.mode_idtx2=response.data.mode_idtx2
+            this.mode_stridx=response.data.mode_stridx
+            this.mode_prompt=response.data.mode_prompt
+            this.suggestShow = true;
+          })
+          .catch(e => {
+            console.log(e);
+          });
+      },
+
       close () {
         if((!this.editedItem.device_name && !this.editedItem.serial_number) || this.isSave){
         this.serialRules.splice(3, 1)
