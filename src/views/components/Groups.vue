@@ -76,12 +76,12 @@
                         cols="4"
                         md="4"
                     >
-                        <v-select
+                        <v-autocomplete
                         :items="group_list"
                         v-model="editedItem.parent"
                         outlined
                         dense
-                        ></v-select>
+                        ></v-autocomplete>
                     </v-col>
                     <v-spacer />
                     <v-col

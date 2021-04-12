@@ -143,14 +143,14 @@
                         cols="4"
                         md="4"
                     >
-                        <v-select
+                        <v-autocomplete
                         :items="group_list"
                         v-model="editedItem.parent"
                         item-value="editedItem.parent[0]"
                         :rules="[v => !!v || 'Group is required']"
                         outlined
                         dense
-                        ></v-select>
+                        ></v-autocomplete>
                     </v-col>
                     </v-row>
                     <v-row no-gutters>
