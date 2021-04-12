@@ -732,7 +732,7 @@ import config from "@/http-config";
 
     methods: {
       filterKeyPress (e) {
-        if(!e.key.match(/^[a-zA-Z]|^-|^_|^\d*$/))
+        if(!e.key.match(/^[a-zA-Z]|^-|^ |^_|^\d*$/))
         {
             e.preventDefault();
         }
