@@ -137,6 +137,7 @@
                         md="4"
                     >
                         <v-text-field
+                        @keydown="filterKeyPress($event)"
                         v-model="editedItem.serial_number"
                         :disabled="editedIndex!=-1"
                         :rules="serialRules"
@@ -157,14 +158,14 @@
                         cols="4"
                         md="4"
                     >
-                        <v-select
+                        <v-autocomplete
                         :items="group_list"
                         v-model="editedItem.parent"
                         item-value="editedItem.parent[0]"
                         :rules="[v => !!v || 'Group is required']"
                         outlined
                         dense
-                        ></v-select>
+                        ></v-autocomplete>
                     </v-col>
                     </v-row>
                     <v-row no-gutters>
@@ -179,6 +180,7 @@
                         md="4"
                     >
                         <v-text-field
+                        @keydown="filterKeyPress($event)"
                         v-model="editedItem.device_name"
                         :rules="[v => !!v || 'Name is required']"
                         required
@@ -246,14 +248,14 @@
                         cols="6"
                         md="6"
                     >
-                        <v-select
+                        <v-autocomplete
                         :items="group_list"
                         v-model="editedItem.parent"
                         item-value="editedItem.parent[0]"
                         :rules="[v => !!v || 'Group is required']"
                         outlined
                         dense
-                        ></v-select>
+                        ></v-autocomplete>
                     </v-col>
                 </v-row>
             <v-card-actions>
@@ -264,9 +266,9 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="dialogCancel" max-width="520px">
+        <v-dialog v-model="dialogCancel" max-width="470px">
           <v-card>
-            <v-card-title class="headline">Data has not been saved. Are you sure to cancel?</v-card-title>
+            <v-card-title class="headline">Data has not been saved. Are you sure you want to proceed?</v-card-title>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
@@ -318,13 +320,27 @@
                         cols="8"
                         md="8"
                     >
+                      <v-menu offset-y v-model="suggestShow" max-height="200px" max-width="300" :nudge-right="(1+getcode.length)*15">
+                        <template v-slot:activator="{}">
                         <v-text-field
+                        @keydown="detectKeyPress($event)"
                         v-model="getcode"
                         required
                         outlined
                         dense
                         class="mt-2"
                         ></v-text-field>
+                        </template>
+                    <v-list dense>
+                      <v-list-item
+                        v-for="(item, index) in sampleSuggest"
+                        :key="index"
+                        @click="selectSuggestion(item)"
+                      >
+                        <v-list-item-title>{{ item }}</v-list-item-title>
+                      </v-list-item>
+                    </v-list>
+                      </v-menu>
                     </v-col>
                     <v-col
                         cols="2"
@@ -383,7 +399,7 @@
     multiple
   >
   <v-expansion-panel>
-  <v-expansion-panel-header>Show rogue devices</v-expansion-panel-header>
+  <v-expansion-panel-header>Show rogue devicess</v-expansion-panel-header>
   <v-expansion-panel-content>
   <rogue-ap></rogue-ap>
   </v-expansion-panel-content>
@@ -402,6 +418,7 @@ import rogue from './Rogue-device.vue'
       'rogue-ap': rogue
     },
     data: () => ({
+      suggestShow: false,
       hideStatus: false,
       toggleSelect: false,
       dataloaded: 0,
@@ -410,6 +427,7 @@ import rogue from './Rogue-device.vue'
       singleSelect: false,
       alert: false,
       parent_watcher: '',
+      isSave: false,
       serialList: [],
       selected: [],
       search: '',
@@ -430,6 +448,13 @@ import rogue from './Rogue-device.vue'
       Multi_dialogDelete: false,
       dialogcli: false,
       dialogMove: false,
+      sampleSuggest: [
+        { text: 'ap-mode', value: 'status', show: true },
+        { text: 'show', value: 'parent', show: true },
+        { text: 'clear', value: 'mac_address', show: true},
+        { text: 'debug', value: 'date_offline', show: true},
+        { text: 'conf t', value: 'date_modified', show: true},
+      ],
       filterableHeaders: [
         { text: 'Status', value: 'status', show: true },
         {
@@ -545,6 +570,30 @@ import rogue from './Rogue-device.vue'
       clearInterval(this.timer)
     },
     methods: {
+
+      filterKeyPress (e) {
+        if(!e.key.match(/^[a-zA-Z]|^-|^_|^\d*$/))
+        {
+            e.preventDefault();
+        }
+      },
+
+      detectKeyPress (e) {
+        if(e.keyCode === 13)
+        {
+            this.sendcode(this.getcode);
+        }
+        if(e.key === '?')
+        {
+            this.getSuggest(this.getcode);
+        }
+      },
+
+      selectSuggestion( e ){
+        this.getcode = this.getcode.replace("?", e);
+      },
+
+      
       todo: function(){           
           this.timer = setInterval(function(){
             if(this.selected.length<=0) this.initialize();
@@ -730,31 +779,60 @@ import rogue from './Rogue-device.vue'
         else this.cliheader= item.device_name;
       },
       sendcode (text) {
-      this.getcode = '';
-      var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+'}';
-      console.log(body);
-      this.code += text + "\n";
-      config
-        .post("/WebCli/"+this.cliserial+", " + text, body)
-        .then(response => {
-          this.code += response.data.content; // JSON are parsed automatically.
-          this.apname=response.data.mode_tip
-          this.mode_url=response.data.mode_url
-          this.mode_idtx=response.data.mode_idtx
-          this.mode_idtx1=response.data.mode_idtx1
-          this.mode_idtx2=response.data.mode_idtx2
-          this.mode_stridx=response.data.mode_stridx
-          this.mode_prompt=response.data.mode_prompt
-          this.code += this.apname;
-          console.log(response.data);
-        })
-        .catch(e => {
-          console.log(e);
-        });
-         console.log(this.cliserial);
+        this.getcode = '';
+        var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+','+text+','+'}';
+        console.log(body);
+        this.code += text + "\n";
+        config
+          .post("/WebCli/ "+this.cliserial, body)
+          .then(response => {
+            this.code += response.data.content; // JSON are parsed automatically.
+            console.log(this.sampleSuggest)
+            this.apname=response.data.mode_tip
+            this.mode_url=response.data.mode_url
+            this.mode_idtx=response.data.mode_idtx
+            this.mode_idtx1=response.data.mode_idtx1
+            this.mode_idtx2=response.data.mode_idtx2
+            this.mode_stridx=response.data.mode_stridx
+            this.mode_prompt=response.data.mode_prompt
+            this.code += this.apname;
+            console.log(response.data);
+          })
+          .catch(e => {
+            console.log(e);
+          });
+          console.log(this.cliserial);
       },
+
+      getSuggest (text) {
+        var body = '{,'+this.mode_url+','+this.mode_idtx+','+this.mode_idtx1+','+this.mode_idtx2+','+this.mode_stridx+','+this.mode_prompt+','+text+'?'+','+'}';
+        config
+          .post("/CliAutoComplete/ "+this.cliserial, body)
+          .then(response => {
+            this.sampleSuggest = response.data.content.split("\r\n")
+            var i;
+            for (i in this.sampleSuggest) {
+                console.log(this.sampleSuggest[i])
+                this.sampleSuggest[i] = this.sampleSuggest[i].slice(2)
+                console.log(this.sampleSuggest[i].indexOf(" "))
+                this.sampleSuggest[i] = this.sampleSuggest[i].substring(0,this.sampleSuggest[i].indexOf(" "))
+            }
+            this.apname=response.data.mode_tip
+            this.mode_url=response.data.mode_url
+            this.mode_idtx=response.data.mode_idtx
+            this.mode_idtx1=response.data.mode_idtx1
+            this.mode_idtx2=response.data.mode_idtx2
+            this.mode_stridx=response.data.mode_stridx
+            this.mode_prompt=response.data.mode_prompt
+            this.suggestShow = true;
+          })
+          .catch(e => {
+            console.log(e);
+          });
+      },
+
       close () {
-        if(!this.editedItem.device_name && !this.editedItem.serial_number){
+        if((!this.editedItem.device_name && !this.editedItem.serial_number) || this.isSave){
         this.serialRules.splice(3, 1)
         this.$refs.form.resetValidation()
         this.valid = false;
@@ -763,6 +841,7 @@ import rogue from './Rogue-device.vue'
           this.editedItem = Object.assign({}, this.defaultItem)
           this.editedItem.parent = this.group_list[0]
           this.editedIndex = -1
+          this.isSave = false
         })
         }
         else this.dialogCancel = true;
@@ -785,54 +864,43 @@ import rogue from './Rogue-device.vue'
       },
 
       save () {
-        if(this.valid){
-          this.$refs.form.resetValidation()
-          if (this.editedIndex > -1) {
-            Object.assign(this.device[this.editedIndex], this.editedItem)
-            console.log(this.editedItem)
-              http
-                .put("/updatedevice/" + this.editedItem.id, this.editedItem)
+        if (this.editedIndex > -1) {
+          Object.assign(this.device[this.editedIndex], this.editedItem)
+          console.log(this.editedItem)
+            http
+              .put("/updatedevice/" + this.editedItem.id, this.editedItem)
+              .then(response => {
+                console.log(response.data);
+              })
+              .catch(e => {
+                console.log(e);
+              });
+              this.close()
+          if(this.parent_watcher!=this.editedItem.parent){
+            config
+                .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
                 .then(response => {
-                  console.log(response.data);
+                console.log(response.data);
                 })
                 .catch(e => {
-                  console.log(e);
+                console.log(e);
                 });
-                this.close()
-            if(this.parent_watcher!=this.editedItem.parent){
-              config
-                  .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
-                  .then(response => {
-                  console.log(response.data);
-                  })
-                  .catch(e => {
-                  console.log(e);
-                  });
-            }
-
-          } else {
-            var i, x = new Array(), c=true;
-            
-            for (i in this.device) {
-              if(this.device[i].serial_number==this.editedItem.serial_number){
-                c=false;
-              }
-            }
-            if(c){
-            this.device.push(this.editedItem)
-              http
-                  .post("/adddevice", this.editedItem)
-                  .then(response => {
-                  this.device[this.device.length-1].id = response.data.id;
-                  console.log(this.editedItem);
-                  })
-                  .catch(e => {
-                  console.log(e);
-                  });
-                this.close()
-            }else this.alert=true;
           }
+
+        } else {
+          this.device.push(this.editedItem)
+            http
+                .post("/adddevice", this.editedItem)
+                .then(response => {
+                this.device[this.device.length-1].id = response.data.id;
+                console.log(this.editedItem);
+                })
+                .catch(e => {
+                console.log(e);
+                });
         }
+        this.isSave = true
+        this.close()
       },
     },
   }

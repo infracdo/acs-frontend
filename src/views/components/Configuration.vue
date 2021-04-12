@@ -47,6 +47,7 @@
         <v-dialog
           v-model="dialog"
           persistent
+          :retain-focus="false"
           max-width="1000px"
         >
           <template v-slot:activator="{ on, attrs }">
@@ -124,6 +125,7 @@
                         <v-text-field
                         v-model="editedItem.ssid"
                         :rules="ssidRules"
+                        @keydown="filterKeyPress($event)"
                         required
                         outlined
                         dense
@@ -311,6 +313,7 @@
                         md="4"
                     >
                         <v-text-field
+                        @keydown="filterKeyPress($event)"
                         v-model="editedItem.gateway_id"
                         required
                         outlined
@@ -358,9 +361,9 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="dialogCancel" max-width="520px">
+        <v-dialog v-model="dialogCancel" max-width="470px">
           <v-card>
-            <v-card-title class="headline">Data has not been saved. Are you sure to cancel?</v-card-title>
+            <v-card-title class="headline">Data has not been saved. Are you sure you want to proceed?</v-card-title>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
@@ -421,6 +424,8 @@
         <v-spacer></v-spacer>
         <v-dialog
           max-width="800px"
+          persistent
+          :retain-focus="false"
           v-model="cdialog"
         >
           <template v-slot:activator="{ on, attrs }">
@@ -532,6 +537,17 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="dialogCancel" max-width="470px">
+          <v-card>
+            <v-card-title class="headline">Data has not been saved. Are you sure you want to proceed?</v-card-title>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
+              <v-btn color="blue darken-1" text @click="cancelConfirm">OK</v-btn>
+              <v-spacer></v-spacer>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="cdialogDelete" max-width="500px">
           <v-card>
             <v-card-title class="headline">Are you sure you want to delete this item?</v-card-title>
@@ -598,7 +614,7 @@ import config from "@/http-config";
         },
         { text: 'WLAN ID', value: 'wlan_id' },
         { text: 'Encryption Mode', value: 'encryption_mode' },
-        { text: 'Portal url', value: 'portal_url' },
+        { text: 'Portal URL', value: 'portal_url' },
         { text: 'Gateway ID', value: 'gateway_id' },
         { text: 'Action', value: 'actions', sortable: false },
       ],
@@ -715,6 +731,13 @@ import config from "@/http-config";
     },
 
     methods: {
+      filterKeyPress (e) {
+        if(!e.key.match(/^[a-zA-Z]|^-|^ |^_|^\d*$/))
+        {
+            e.preventDefault();
+        }
+      },
+
       initialize () {
         this.dataloaded = 0
         this.requestFailed = 0
@@ -821,7 +844,10 @@ import config from "@/http-config";
         this.editedItem.auth = false;
         this.editedItem.limitless = false;
         this.editedItem.ssid = '';
-        this.close()
+        this.citems.description = ''
+        this.citems.command = ''
+        if (this.dialog) this.close()
+        else this.cclose()
         this.cancelClose()
       },
 
@@ -885,7 +911,7 @@ import config from "@/http-config";
 
       close () {
         if((!this.editedItem.ssid && !this.editedItem.limitless && !this.editedItem.auth) || this.isSave){
-          this.$refs.form.resetValidation();
+          if (this.dialog) this.$refs.form.resetValidation();
           this.parent_watcher = this.editedItem.parent;
           this.valid = false;
           this.dialog = false;
@@ -944,12 +970,17 @@ import config from "@/http-config";
       },
 
       cclose () {
-        this.$refs.cform.resetValidation()
-        this.cdialog = false
-        this.$nextTick(() => {
-          this.citems = Object.assign({}, this.defaultItem)
-          this.cIndex = -1
-        })
+          if((!this.citems.description && !this.citems.command) || this.isSave){
+          this.$refs.cform.resetValidation()
+          this.cdialog = false
+          this.$nextTick(() => {
+            this.citems = Object.assign({}, this.defaultItem)
+            this.cIndex = -1
+            this.isSave = false
+          })
+        }else {
+          this.dialogCancel = true;
+        }
       },
       csave () {
         if (this.cIndex > -1) {
@@ -1036,6 +1067,7 @@ import config from "@/http-config";
                 });
 
         }
+        this.isSave = true
         this.cclose()
       },
       save () {

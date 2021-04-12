@@ -76,12 +76,12 @@
                         cols="4"
                         md="4"
                     >
-                        <v-select
+                        <v-autocomplete
                         :items="group_list"
                         v-model="editedItem.parent"
                         outlined
                         dense
-                        ></v-select>
+                        ></v-autocomplete>
                     </v-col>
                     <v-spacer />
                     <v-col
@@ -95,6 +95,7 @@
                         md="4"
                     >
                         <v-text-field
+                        @keydown="filterKeyPress($event)"
                         v-model="editedItem.location"
                         :rules="[v => !!v || 'Location is required']"
                         required
@@ -115,6 +116,7 @@
                         md="4"
                     >
                         <v-text-field
+                        @keydown="filterKeyPress($event)"
                         v-model="editedItem.group_name"
                         :rules="[v => !!v || 'Group name cannot be empty']"
                         required
@@ -146,9 +148,9 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-        <v-dialog v-model="dialogCancel" max-width="520px">
+        <v-dialog v-model="dialogCancel" max-width="470px">
           <v-card>
-            <v-card-title class="headline">Data has not been saved. Are you sure to cancel?</v-card-title>
+            <v-card-title class="headline">Data has not been saved. Are you sure you want to proceed?</v-card-title>
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn color="blue darken-1" text @click="cancelClose">Cancel</v-btn>
@@ -254,6 +256,14 @@ import http from "@/http-common";
     },
 
     methods: {
+
+      filterKeyPress (e) {
+        if(!e.key.match(/^[a-zA-Z]|^-|^_|^\d*$/))
+        {
+            e.preventDefault();
+        }
+      },
+
       initialize () {
       this.dataloaded = 0 
       http
