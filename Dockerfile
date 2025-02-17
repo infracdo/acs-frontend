@@ -21,8 +21,7 @@ WORKDIR /app
 RUN npm run build
 
 # Stage 2: Set up Nginx and copy built files
-#FROM nginx:alpine
-FROM node:12 as production
+FROM nginx:alpine
 
 # Copy the build artifacts from the previous stage
 COPY --from=build /app/dist /usr/share/nginx/html
@@ -31,5 +30,4 @@ COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80 443
 
 # Command to run Nginx
-#CMD ["nginx", "-g", "daemon off;"]
-CMD ["npm", "start"]
+CMD ["nginx", "-g", "daemon off;"]
