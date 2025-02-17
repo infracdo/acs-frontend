@@ -1,5 +1,4 @@
-FROM node:12 as build
-
+FROM node:16 as build
 # Set the working directory
 WORKDIR /app
 
@@ -18,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Set up a lightweight Node.js server
-FROM node:12-alpine
+FROM node:16-alpine  # Upgrade here as well
 
 WORKDIR /app
 
