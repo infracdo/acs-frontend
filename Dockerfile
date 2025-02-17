@@ -1,10 +1,11 @@
+# Build stage
 FROM node:12 as build
-
 
 # Set the working directory
 WORKDIR /app
 
 RUN git config --global url."https://".insteadOf git://
+
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
@@ -14,20 +15,19 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-
-WORKDIR /app
-
 # Build the application
 RUN npm run build
 
-# Stage 2: Set up Nginx and copy built files
-FROM nginx:alpine
+# Stage 2: Serve static files using an external Nginx
+FROM node:12 as production
 
-# Copy the build artifacts from the previous stage
+WORKDIR /app
+
+# Copy build artifacts from the build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose the port that Nginx will use
-EXPOSE 80 443
+# Expose only port 80 (Nginx will be handled externally)
+EXPOSE 80
 
-# Command to run Nginx
-#CMD ["nginx", "-g", "daemon off;"]
+# The container just serves static content, so no need to run any server here
+CMD ["npm", "start"]
