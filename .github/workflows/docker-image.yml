@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - acs-test  # Trigger on pushes to the main branch
+      - ojt-test  # Trigger on pushes to the main branch
   #pull_request:  # Trigger on pull requests
 
 jobs:
@@ -27,10 +27,10 @@ jobs:
       - name: Build Docker Image
         run: 
           # docker build --target build -t my-image:build .
-          docker build -t acs-frontend:test .
+          docker build -t acs-frontend:infra-test .
 
       # Step 4: Push the Docker image
       - name: Push Docker Image
         run: |
-          docker tag acs-frontend:test infracdo/acs-frontend:test
-          docker push infracdo/acs-frontend:test
+          docker tag acs-frontend:infra-test infracdo/acs-frontend:infra-test
+          docker push infracdo/acs-frontend:infra-test
