@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export default axios.create({
-  baseURL: "http://10.160.0.62:7547",
+  baseURL: "https://acs-cdo1.k8s.apolloglobal.net",
   headers: {
     "Content-type": "application/json",
   }
