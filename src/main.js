@@ -25,6 +25,9 @@ Vue.use(VueKeyCloak, {
     realm: 'ApolloACS',
     url: 'https://auth.apollotech.co/auth',
     clientId: 'Apollo',
+    // realm: 'workconnect-test',
+    // url: 'https://wcdssi.apolloglobal.net:8443/auth',
+    // clientId: 'test-acs',
   },
   onReady: () => {
     new Vue({
