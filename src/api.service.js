@@ -27,7 +27,7 @@ class ApiService {
   }
 
   getCountCurrentlyConnectedUsersPerAP() {
-    return http.get('/api/count-connected-users-per-ap');
+    return http.get('/api/count-current-connected-users-per-ap');
   }
 
   getCurrentConnectedUsersPerAP() {

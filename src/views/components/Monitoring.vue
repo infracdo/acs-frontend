@@ -117,7 +117,11 @@
               loading-text="Loading... Please wait"
               style="min-width: 1000px"
               class="header-nowrap"
-            />
+            >
+              <template v-slot:item.bandwidthMB="{ item }">
+                {{ item.bandwidthMB }} MB
+              </template>
+            </v-data-table>
           </div>
         </v-card>
       </v-col>
@@ -250,22 +254,16 @@ export default {
           value: 'ssid',
         },
         {
+          text: 'Bandwidth Consumption',
+          align: 'start',
+          sortable: true,
+          value: 'bandwidthMB',
+        },
+        {
           text: 'Time Connected',
           align: 'start',
           sortable: true,
           value: 'lastActive',
-        },
-        {
-          text: 'Total Incoming Packets',
-          align: 'start',
-          sortable: true,
-          value: 'totalIncomingPackets',
-        },
-        {
-          text: 'Total Outgoing Packets',
-          align: 'start',
-          sortable: true,
-          value: 'totalOutgoingPackets',
         },
       ],
       headersConnectedUsers: [
