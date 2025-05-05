@@ -3,11 +3,11 @@ import http from './http-common';
 /* eslint-disable class-methods-use-this */
 class ApiService {
   getCountConnectedUsers() {
-    return http.get('/api/count-connected-users');
+    return http.get('/api/count-current-connected-users');
   }
 
   getCountCurrentConnectedAPs() {
-    return http.get('/api/count-connected-aps');
+    return http.get('/api/count-current-connected-aps');
   }
 
   getTotalUserConnectionsToday() {
@@ -18,7 +18,9 @@ class ApiService {
     return http.get('/api/total-bandwidth-consumption-today');
   }
 
-  // Still no average connection time
+  getAvgConnectionTime() {
+    return http.get('/api/avg-connection-time');
+  }
 
   getAverageBandwidthPerConnection() {
     return http.get('/api/average-bandwidth-per-connection');

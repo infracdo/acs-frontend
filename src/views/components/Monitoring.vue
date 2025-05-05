@@ -23,7 +23,8 @@
               class="font-weight-bold display-2 text-right"
               style="text-align: right; display: block; color: white;"
             >
-              {{ card.value }}
+              {{ formatCardValue(card) }}
+              <!-- {{ card.value }} -->
             </v-card-title>
             <v-card-text
               class="text-right text-subtitle-2"
@@ -174,9 +175,10 @@ export default {
           title: 'Average Connection Time',
           value: 0,
           color: '#1E88E5',
+          key: 'averageConnectionTime',
         },
         {
-          title: 'Average Bandwidth per Connection',
+          title: 'Average Bandwidth Per Connection',
           value: 0,
           color: '#E57373',
           key: 'averageBandwidthPerConnection',
@@ -334,6 +336,7 @@ export default {
           countConnectedAPsResponse,
           totalUserConnectionsTodayResponse,
           totalBandwidthConsumptionTodayResponse,
+          avgConnectionTimeResponse,
           avgBandwidthConnectionResponse,
           countConnectedUsersPerApResponse,
           connectedUsersPerApResponse,
@@ -343,6 +346,7 @@ export default {
           ApiService.getCountCurrentConnectedAPs(),
           ApiService.getTotalUserConnectionsToday(),
           ApiService.getTotalBandwidthConsumptionToday(),
+          ApiService.getAvgConnectionTime(),
           ApiService.getAverageBandwidthPerConnection(),
           ApiService.getCountCurrentlyConnectedUsersPerAP(),
           ApiService.getCurrentConnectedUsersPerAP(),
@@ -354,6 +358,7 @@ export default {
         this.cardsOverallSummary[1].value = countConnectedAPsResponse.data.connectedAPs;
         this.cardsOverallSummary[2].value = totalUserConnectionsTodayResponse.data.totalUserConnectionsToday;
         this.cardsOverallSummary[3].value = totalBandwidthConsumptionTodayResponse.data.totalBandwidthConsumptionToday;
+        this.cardsOverallSummary[4].value = avgConnectionTimeResponse.data.averageConnectionTime;
         this.cardsOverallSummary[5].value = avgBandwidthConnectionResponse.data.averageBandwidthPerConnection;
 
         // Convert array to map
@@ -401,6 +406,15 @@ export default {
       );
       // Update the connected users table data
       this.connectedUsers = apData ? apData.connectedUsers : [];
+    },
+    formatCardValue(card) {
+      if (card.title === 'Total Bandwidth Consumption for Today' || card.title === 'Average Bandwidth Per Connection') {
+        return `${card.value} MB`;
+      }
+      if (card.title === 'Average Connection Time') {
+        return `${card.value} MINS`;
+      }
+      return card.value;
     },
   },
 };
