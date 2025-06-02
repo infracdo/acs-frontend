@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export default axios.create({
-  baseURL: "http://10.160.0.62:7547",
+  baseURL: "https://acsbe-test.dataconnect.com.ph",
   headers: {
     "Content-type": "application/json",
   }
