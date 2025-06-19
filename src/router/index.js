@@ -5,7 +5,7 @@ import Layout from '@/views/layout/TheLayout.vue';
 
 /* Router Modules */
 // import vuetifyRouter from '@/demo/router/vuetify';
-//import nestedRouter from '@/demo/router/nested';
+// import nestedRouter from '@/demo/router/nested';
 // import componentsRouter from '@/demo/router/components';
 import authRouter from './modules/auth';
 // import errorsRouter from './modules/errors';
@@ -38,7 +38,7 @@ Vue.use(Router);
 export const constantRoutes = [
   {
     path: '/',
-    redirect: '/Devices',
+    redirect: '/Devices', // auto redirects to Devices page
     hidden: true,
   },
   // {
@@ -149,6 +149,18 @@ export const constantRoutes = [
       },
     ],
   },
+  {
+    path: '/',
+    component: Layout,
+    children: [
+      {
+        path: '/monitoring',
+        component: () => import('@/views/components/Monitoring.vue'),
+        name: 'Monitoring',
+        meta: { title: 'Monitoring', icon: 'mdi-chart-arc' },
+      },
+    ],
+  },
   ...authRouter,
 ];
 
@@ -163,7 +175,7 @@ export const asyncRoutes = [
   // permissionRouter,
   // vuetifyRouter,
   // ...componentsRouter,
-  //nestedRouter,
+  // nestedRouter,
   // errorsRouter,
   { path: '*', redirect: '/error/404', hidden: true },
 ];

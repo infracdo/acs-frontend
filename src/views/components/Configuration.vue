@@ -86,8 +86,8 @@
                         <v-select
                         :items="wlanid"
                         :disabled="formTitle!='New SSID'"
-                        v-model="editedItem.wlan_id"
-                        :label="editedItem.wlan_id.toString()"
+                        v-model="editedItem.wlanId"
+                        :label="editedItem.wlanId.toString()"
                         outlined
                         dense
                         ></v-select>
@@ -105,7 +105,7 @@
                     >
                         <v-select
                         :items="['Bridge', 'Nat']"
-                        v-model="editedItem.forward_mode"
+                        v-model="editedItem.forwardMode"
                         outlined
                         dense
                         ></v-select>
@@ -135,17 +135,17 @@
                     <v-col
                         cols="1"
                         md="1"
-                        v-if="editedItem.forward_mode=='Bridge'"
+                        v-if="editedItem.forwardMode=='Bridge'"
                     >
                     <v-subheader><div v-html="'VLAN ID <strong>*</strong>'"></div></v-subheader>
                     </v-col>
                     <v-col
                         cols="4"
                         md="4"
-                        v-if="editedItem.forward_mode=='Bridge'"
+                        v-if="editedItem.forwardMode=='Bridge'"
                     >
                         <v-text-field
-                        v-model="editedItem.vlan_id"
+                        v-model="editedItem.vlanId"
                         :rules="vlanRules"
                         required
                         outlined
@@ -166,13 +166,13 @@
                     >
                         <v-select
                         :items="['Open', 'WPA-PSK', 'WPA-PSK2']"
-                        v-model="editedItem.encryption_mode"
+                        v-model="editedItem.encryptionMode"
                         outlined
                         dense
                         ></v-select>
                     </v-col>
                     </v-row>
-                    <v-row no-gutters v-if="editedItem.encryption_mode!='Open'">
+                    <v-row no-gutters v-if="editedItem.encryptionMode!='Open'">
                     <v-col
                         cols="1"
                         md="1"
@@ -273,7 +273,7 @@
                         md="4"
                     >
                         <v-text-field
-                        v-model="editedItem.portal_url"
+                        v-model="editedItem.portalUrl"
                         required
                         outlined
                         :rules="portalRules"
@@ -293,7 +293,7 @@
                         md="4"
                     >
                         <v-text-field
-                        v-model="editedItem.portal_ip"
+                        v-model="editedItem.portalIp"
                         :rules="ipRules"
                         required
                         outlined
@@ -314,7 +314,7 @@
                     >
                         <v-text-field
                         @keydown="filterKeyPress($event)"
-                        v-model="editedItem.gateway_id"
+                        v-model="editedItem.gatewayId"
                         required
                         outlined
                         dense
@@ -353,7 +353,7 @@
               <v-btn
                 color="blue darken-1"
                 text
-                :disabled="!valid || !!!editedItem.ssid || (!!!editedItem.passphrase&&editedItem.encryption_mode!='Open')"
+                :disabled="!valid || !!!editedItem.ssid || (!!!editedItem.passphrase&&editedItem.encryptionMode!='Open')"
                 @click="save"
               >
                 Save
@@ -612,10 +612,10 @@ import config from "@/http-config";
           sortable: false,
           value: 'ssid',
         },
-        { text: 'WLAN ID', value: 'wlan_id' },
-        { text: 'Encryption Mode', value: 'encryption_mode' },
-        { text: 'Portal URL', value: 'portal_url' },
-        { text: 'Gateway ID', value: 'gateway_id' },
+        { text: 'WLAN ID', value: 'wlanId' },
+        { text: 'Encryption Mode', value: 'encryptionMode' },
+        { text: 'Portal URL', value: 'portalUrl' },
+        { text: 'Gateway ID', value: 'gatewayId' },
         { text: 'Action', value: 'actions', sortable: false },
       ],
       cliheaders: [
@@ -642,36 +642,36 @@ import config from "@/http-config";
       allssidIndex: -1,
       editedItem: {
         id: 0,
-        wlan_id: '',
+        wlanId: '',
         ssid: '',
-        forward_mode: 'Bridge',
-        encryption_mode: 'Open',
+        forwardMode: 'Bridge',
+        encryptionMode: 'Open',
         passphrase: '',
-        portal_url: '',
-        vlan_id: 1,
+        portalUrl: '',
+        vlanId: 1,
         uplink: 0,
         downlink: 0,
         limitless: false,
         auth: false,
-        portal_ip: '',
+        portalIp: '',
         parent: '',
-        gateway_id: '',
+        gatewayId: '',
         seamless: false,
       },
       defaultItem: {
         model: 'ALL',
-        wlan_id: '',
+        wlanId: '',
         ssid: '',
-        forward_mode: 'Bridge',
-        encryption_mode: 'Open',
-        portal_url: '',
-        vlan_id: 1,
+        forwardMode: 'Bridge',
+        encryptionMode: 'Open',
+        portalUrl: '',
+        vlanId: 1,
         uplink: 14400,
         downlink: 14400,
         limitless: false,
         auth: false,
-        portal_ip: '',
-        gateway_id: '',
+        portalIp: '',
+        gatewayId: '',
         seamless: false,
       },
       citems: {
@@ -803,7 +803,7 @@ import config from "@/http-config";
           .then(response => {
             var i, x = new Array();
             for (i in response.data) {
-              x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+              x[i] = response.data[i].parent+'/'+response.data[i].groupName;
             };
             this.group_list = x;
             this.editedItem.parent = x[0];
@@ -875,7 +875,7 @@ import config from "@/http-config";
             });
         for (i in this.device) {
           config
-              .get("/DeleteObject/"+this.device[i].serial_number+", Device.WiFi.SSID."+this.editedItem.wlan_id+".")
+              .get("/DeleteObject/"+this.device[i].serialNumber+", Device.WiFi.SSID."+this.editedItem.wlanId+".")
               .then(response => {
               console.log(response.data);
               })
@@ -950,7 +950,7 @@ import config from "@/http-config";
               this.ssidList.push(this.all_ssid[i].ssid)
             }
             if(this.editedItem.parent.startsWith(this.all_ssid[i].parent)||this.editedItem.parent.includes(this.all_ssid[i].parent)){
-              this.wlanid.splice(this.wlanid.indexOf(this.all_ssid[i].wlan_id), 1)
+              this.wlanid.splice(this.wlanid.indexOf(this.all_ssid[i].wlanId), 1)
             }
           };
           for (i in this.all_device) {
@@ -966,7 +966,7 @@ import config from "@/http-config";
 
       addrules () {
         this.ssidRules.push(v => this.ssidList.indexOf(v) < 0|| 'SSID already exist');
-        this.editedItem.wlan_id=this.wlanid[0];
+        this.editedItem.wlanId=this.wlanid[0];
       },
 
       cclose () {
@@ -1015,7 +1015,7 @@ import config from "@/http-config";
             if(this.modelArray.indexOf(this.device[i].model)>0 || this.modelArray.indexOf("ALL")>0){
               console.log("executing")
               config
-                  .get("/ExecuteGroupCommand/"+this.device[i].serial_number+", "+this.citems.id)
+                  .get("/ExecuteGroupCommand/"+this.device[i].serialNumber+", "+this.citems.id)
                   .then(response => {
                   console.log(response.data);
                   })
@@ -1052,7 +1052,7 @@ import config from "@/http-config";
                   if(this.modelArray.indexOf(this.device[i].model)>0 || this.modelArray.indexOf("ALL")){
                     console.log("executing")
                     config
-                        .post("/ExecuteGroupCommand/"+this.device[i].serial_number+", "+response.data.id)
+                        .post("/ExecuteGroupCommand/"+this.device[i].serialNumber+", "+response.data.id)
                         .then(response => {
                         console.log(response.data);
                         })
@@ -1073,20 +1073,20 @@ import config from "@/http-config";
       save () {
         if (this.editedIndex > -1) {
           Object.assign(this.ssid[this.editedIndex], this.editedItem)
-          var v = this.editedItem.wlan_id;
+          var v = this.editedItem.wlanId;
           var entype = '', passkey = this.editedItem.passphrase;
-          var vid = this.editedItem.vlan_id;
-          if(this.editedItem.encryption_mode=='Open'){
+          var vid = this.editedItem.vlanId;
+          if(this.editedItem.encryptionMode=='Open'){
             entype = 'None'
             passkey = 'null'
           }
-          else if(this.editedItem.encryption_mode=='WPA-PSK') entype = 'WPA-Personal'
+          else if(this.editedItem.encryptionMode=='WPA-PSK') entype = 'WPA-Personal'
           else entype = 'WPA2-Personal'
-          if(this.editedItem.forward_mode=='Nat'){
+          if(this.editedItem.forwardMode=='Nat'){
             vid = 'null'
           }
-          var body = "'{,Device.WiFi.SSID."+v+".SSID:"+this.editedItem.ssid+",Device.WiFi.SSID."+v+".LowerLayers:1&2,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_IsHidden:false,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_FowardType:"+this.editedItem.forward_mode+",Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_VLANID:"+vid+",Device.WiFi.AccessPoint."+v+".Security.ModeEnabled:"+entype+",Device.WiFi.AccessPoint."+v+".Security.KeyPassphrase:"+passkey+",}'"
-          var abody = "'{,WiFiDog,"+this.editedItem.portal_ip+","+this.editedItem.portal_url+",js,"+this.editedItem.gateway_id+",true,true}'"
+          var body = "'{,Device.WiFi.SSID."+v+".SSID:"+this.editedItem.ssid+",Device.WiFi.SSID."+v+".LowerLayers:1&2,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_IsHidden:false,Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_FowardType:"+this.editedItem.forwardMode+",Device.WiFi.SSID."+v+".X_WWW-RUIJIE-COM-CN_VLANID:"+vid+",Device.WiFi.AccessPoint."+v+".Security.ModeEnabled:"+entype+",Device.WiFi.AccessPoint."+v+".Security.KeyPassphrase:"+passkey+",}'"
+          var abody = "'{,WiFiDog,"+this.editedItem.portalIp+","+this.editedItem.portalUrl+",js,"+this.editedItem.gatewayId+",true,true}'"
           console.log(body);
           console.log(abody);
           var i;
@@ -1100,7 +1100,7 @@ import config from "@/http-config";
             });
           for (i in this.device) {
             config
-                .post("/AddSSID/"+this.device[i].serial_number+", "+this.editedItem.id)
+                .post("/AddSSID/"+this.device[i].serialNumber+", "+this.editedItem.id)
                 .then(response => {
                 console.log(response.data);
                 })
@@ -1109,7 +1109,7 @@ import config from "@/http-config";
                 });
           }
         } else {
-          var v = this.editedItem.wlan_id;
+          var v = this.editedItem.wlanId;
           this.wlanid.splice(this.wlanid.indexOf(v), 1)
           this.ssid.push(this.editedItem);
           this.all_ssid.push(this.editedItem);
@@ -1121,7 +1121,7 @@ import config from "@/http-config";
                   this.all_ssid[this.all_ssid.length-1].id = response.data.id;
                   for (i in this.device) {
                     config
-                        .post("/AddSSID/"+this.device[i].serial_number+", "+response.data.id)
+                        .post("/AddSSID/"+this.device[i].serialNumber+", "+response.data.id)
                         .then(response => {
                         console.log(response.data);
                         })

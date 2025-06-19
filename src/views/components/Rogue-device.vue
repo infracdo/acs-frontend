@@ -4,7 +4,7 @@
     :headers="computedHeaders"
     :items="device"
     :search="search"
-    item-key="serial_number"
+    item-key="serialNumber"
     :single-select="singleSelect"
     show-select
     class="elevation-1"
@@ -123,7 +123,7 @@
                         md="4"
                     >
                         <v-text-field
-                        v-model="editedItem.serial_number"
+                        v-model="editedItem.serialNumber"
                         :disabled="editedIndex!=-1"
                         :rules="serialRules"
                         required
@@ -165,7 +165,7 @@
                         md="4"
                     >
                         <v-text-field
-                        v-model="editedItem.device_name"
+                        v-model="editedItem.deviceName"
                         :rules="[v => !!v || 'Name is required']"
                         required
                         outlined
@@ -185,7 +185,7 @@
                     >
                         <v-select
                         :items="['Access Point', 'Switch', 'Router']"
-                        v-model="editedItem.device_type"
+                        v-model="editedItem.deviceType"
                         item-value="Access Point"
                         :rules="[v => !!v || 'Device type is required']"
                         outlined
@@ -207,7 +207,7 @@
                 Cancel
               </v-btn>
               <v-btn
-                :disabled="!valid || !!!editedItem.device_name || !!!editedItem.parent || !!!editedItem.serial_number"
+                :disabled="!valid || !!!editedItem.deviceName || !!!editedItem.parent || !!!editedItem.serialNumber"
                 color="blue darken-1"
                 text
                 @click="save"
@@ -407,12 +407,12 @@ import config from "@/http-config";
           text: 'Device Name',
           align: 'start',
           sortable: false,
-          value: 'device_name',
+          value: 'deviceName',
           show: true
         },
         { text: 'Group', value: 'parent', show: true },
-        { text: 'Mac Address', value: 'mac_address', show: true },
-        { text: 'Offline Time', value: 'date_offline', show: true },
+        { text: 'Mac Address', value: 'macAddress', show: true },
+        { text: 'Offline Time', value: 'dateOffline', show: true },
       ],
       headers: [
         { text: 'Status', value: 'status', show: true },
@@ -420,13 +420,13 @@ import config from "@/http-config";
           text: 'Device Name',
           align: 'start',
           sortable: false,
-          value: 'device_name',
+          value: 'deviceName',
           show: true,
         },
-        { text: 'Serial Number', value: 'serial_number', show: true },
+        { text: 'Serial Number', value: 'serialNumber', show: true },
         { text: 'Group', value: 'parent', show: true },
-        { text: 'Mac Address', value: 'mac_address', show: true },
-        { text: 'Offline Time', value: 'date_offline', show: true },
+        { text: 'Mac Address', value: 'macAddress', show: true },
+        { text: 'Offline Time', value: 'dateOffline', show: true },
         { text: 'Action', value: 'actions', sortable: false, show: true },
       ],
     serialRules: [
@@ -446,32 +446,32 @@ import config from "@/http-config";
       editedItem: {
         id: '',
         status: 'offline',
-        device_name: '',
+        deviceName: '',
         activated: '',
-        date_created: '',
-        date_modified: '',
-        date_offline: '',
-        group_name: '',
+        dateCreated: '',
+        dateModified: '',
+        dateOffline: '',
+        groupName: '',
         location: '',
-        mac_address: '',
+        macAddress: '',
         parent: '/apollo',
-        device_type: 'Access Point',
-        serial_number: '',
+        deviceType: 'Access Point',
+        serialNumber: '',
       },
       defaultItem: {
         id: '',
         status: 'offline',
-        device_name: '',
+        deviceName: '',
         activated: '',
-        date_created: '',
-        date_modified: '',
-        date_offline: '',
-        group_name: '',
+        dateCreated: '',
+        dateModified: '',
+        dateOffline: '',
+        groupName: '',
         location: '',
-        mac_address: '',
+        macAddress: '',
         parent: '',
-        device_type: 'Access Point',
-        serial_number: '',
+        deviceType: 'Access Point',
+        serialNumber: '',
       },
     }),
 
@@ -524,7 +524,7 @@ import config from "@/http-config";
           this.device = []
           var i;
           for(i in response.data){
-            this.serialList.push(response.data[i].serial_number)
+            this.serialList.push(response.data[i].serialNumber)
             if(response.data[i].parent == "unassigned") this.device.push(response.data[i])
           } 
           console.log(response.data)
@@ -541,7 +541,7 @@ import config from "@/http-config";
           .then(response => {
             var i, x = new Array();
             for (i in response.data) {
-              x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+              x[i] = response.data[i].parent+'/'+response.data[i].groupName;
             };
             this.group_list = x;
             if(!!!this.group_list) this.editedItem.parent = this.group_list[0];
@@ -569,7 +569,7 @@ import config from "@/http-config";
       },
 
       cancelConfirm () {
-        this.editedItem.device_name = '';
+        this.editedItem.deviceName = '';
         this.editedItem.parent = '';
         this.close();
         this.cancelClose();
@@ -581,7 +581,7 @@ import config from "@/http-config";
           .then(response => {
             var i, x = new Array();
             for (i in response.data) {
-              x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+              x[i] = response.data[i].parent+'/'+response.data[i].groupName;
             };
             this.group_list = x;
             if(!!!this.group_list) this.editedItem.parent = this.group_list[0];
@@ -614,7 +614,7 @@ import config from "@/http-config";
                 });
                 this.closeMove()
               config
-                  .get("/MoveDeviceGroup/"+this.selected[i].serial_number)
+                  .get("/hive/MoveDeviceGroup/"+this.selected[i].serialNumber)
                   .then(response => {
                   console.log(response.data);
                   })
@@ -668,7 +668,7 @@ import config from "@/http-config";
           var i, x = new Array();
           for (i in this.selected) {
         config
-            .get("/Reboot/"+this.selected[i].serial_number)
+            .get("/Reboot/"+this.selected[i].serialNumber)
             .then(response => {
             console.log(response.data);
             })
@@ -695,9 +695,9 @@ import config from "@/http-config";
         this.mode_idtx1 = '0';
         this.mode_idtx2 = '0';
         this.mode_stridx = '';
-        this.cliserial = item.serial_number;
-        if(item.device_name==null) this.cliheader= item.serial_number;
-        else this.cliheader= item.device_name;
+        this.cliserial = item.serialNumber;
+        if(item.deviceName==null) this.cliheader= item.serialNumber;
+        else this.cliheader= item.deviceName;
       },
       sendcode (text) {
       this.getcode = '';
@@ -724,7 +724,7 @@ import config from "@/http-config";
          console.log(this.cliserial);
       },
       close () {
-        if((!this.editedItem.parent && !this.editedItem.device_name) || this.isSave){
+        if((!this.editedItem.parent && !this.editedItem.deviceName) || this.isSave){
           this.serialRules.splice(3, 1)
           this.$refs.form.resetValidation()
           this.valid = false;
@@ -764,7 +764,7 @@ import config from "@/http-config";
                 });
             if(this.parent_watcher!=this.editedItem.parent){
               config
-                  .get("/MoveDeviceGroup/"+this.editedItem.serial_number)
+                  .get("/hive/MoveDeviceGroup/"+this.editedItem.serialNumber)
                   .then(response => {
                   console.log(response.data);
                   })

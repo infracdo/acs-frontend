@@ -117,7 +117,7 @@
                     >
                         <v-text-field
                         @keydown="filterKeyPress($event)"
-                        v-model="editedItem.group_name"
+                        v-model="editedItem.groupName"
                         :rules="[v => !!v || 'Group name cannot be empty']"
                         required
                         outlined
@@ -140,7 +140,7 @@
               <v-btn
                 color="blue darken-1"
                 text
-                :disabled="!valid || !!!editedItem.location || !!!editedItem.group_name"
+                :disabled="!valid || !!!editedItem.location || !!!editedItem.groupName"
                 @click="save"
               >
                 Save
@@ -208,7 +208,7 @@ import http from "@/http-common";
           text: 'Group name',
           align: 'start',
           sortable: false,
-          value: 'group_name',
+          value: 'groupName',
         },
         { text: 'Parent', value: 'parent' },
         { text: 'Location', value: 'location' },
@@ -220,17 +220,17 @@ import http from "@/http-common";
       editedItem: {
         id: '',
         child: '',
-        date_created: '',
-        date_modified: '',
-        group_name: '',
+        dateCreated: '',
+        dateModified: '',
+        groupName: '',
         location: '',
         parent: '',
       },
       defaultItem: {
         child: '',
-        date_created: '',
-        date_modified: '',
-        group_name: '',
+        dateCreated: '',
+        dateModified: '',
+        groupName: '',
         location: '',
         parent: '',
       },
@@ -272,7 +272,7 @@ import http from "@/http-common";
           this.group = response.data; // JSON are parsed automatically.
           var i, x = new Array();
           for (i in this.group) {
-            x[i] = response.data[i].parent+'/'+response.data[i].group_name;
+            x[i] = response.data[i].parent+'/'+response.data[i].groupName;
           };
           this.group_list = x;
           this.dataloaded = 1 
@@ -291,7 +291,7 @@ import http from "@/http-common";
       },
 
       cancelConfirm () {
-        this.editedItem.group_name = '';
+        this.editedItem.groupName = '';
         this.editedItem.location = '';
         this.close();
         this.cancelClose();
@@ -321,7 +321,7 @@ import http from "@/http-common";
       },
 
       close () {
-        if((!this.editedItem.group_name && !this.editedItem.location) || this.isSave){
+        if((!this.editedItem.groupName && !this.editedItem.location) || this.isSave){
           this.$refs.form.resetValidation()
           this.dialog = false
           this.$nextTick(() => {
@@ -351,7 +351,7 @@ import http from "@/http-common";
               });
         } else {
           this.group.push(this.editedItem)
-          this.group_list.push(this.editedItem.parent+"/"+this.editedItem.group_name)
+          this.group_list.push(this.editedItem.parent+"/"+this.editedItem.groupName)
             http
                 .post("/addgroup", this.editedItem)
                 .then(response => {
