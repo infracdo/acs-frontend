@@ -606,12 +606,7 @@ import config from "@/http-config";
       dataTracker: [],
       parent_watcher: '',
       headers: [
-        {
-          text: 'SSID',
-          align: 'start',
-          sortable: false,
-          value: 'ssid',
-        },
+        { text: 'SSID', align: 'start', sortable: false, value: 'ssid' },
         { text: 'WLAN ID', value: 'wlanId' },
         { text: 'Encryption Mode', value: 'encryptionMode' },
         { text: 'Portal URL', value: 'portalUrl' },
